@@ -1,3 +1,11 @@
 build
 dist
 *.egg-info
+node_modules
+static
+package-lock.json
+.env
+package.json
+postcss.config.js
+tailwind.config.js
+input.css

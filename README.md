@@ -1,5 +1,10 @@
 # Xue
 
+$$
+35 = 5 \times 7
+\frac{n!}{k!(n-k)!} = \binom{n}{k}
+$$
+
 ## Tailwind CSS
 
 Tailwind CSS 的 JIT (Just-In-Time) 模式，以下是实现步骤:

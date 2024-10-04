@@ -50,6 +50,12 @@ class Link(HTMLTag):
         return f"{' ' * indent}<link {attrs}>"
 class Style(HTMLTag): pass
 class H1(HTMLTag): pass
+class H2(HTMLTag): pass
+class H3(HTMLTag): pass
+class H4(HTMLTag): pass
+class H5(HTMLTag): pass
+class H6(HTMLTag): pass
+class Code(HTMLTag): pass
 class Form(HTMLTag): pass
 class Input(HTMLTag):
     def render(self, indent=0):
@@ -58,6 +64,8 @@ class Input(HTMLTag):
 
 class Button(HTMLTag): pass
 class Ul(HTMLTag): pass
+class Ol(HTMLTag): pass
 class Li(HTMLTag): pass
 class Div(HTMLTag): pass
 class Span(HTMLTag): pass
+class P(HTMLTag): pass

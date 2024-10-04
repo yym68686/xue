@@ -1,18 +1,286 @@
+import os
+# from xue import *
+from bs4 import BeautifulSoup
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from xue import *
-import os
+from parse_markdown import get_entities_from_markdown_file, Title as TitleEntity, CodeBlock, ListItem, Link as LinkEntity, EmptyLine, OrderList, Paragraph, DisplayMath
 
-app = FastAPI()
+class HTMLTag:
+    def __init__(self, *children, **attributes):
+        self.attributes = attributes
+        self.children = list(children)
+        if 'class_' in self.attributes:
+            self.attributes['class'] = self.attributes.pop('class_')
 
-# 假设所有的Markdown文件都存储在 'markdown' 文件夹中
-MARKDOWN_DIR = '.'
+    def render(self, indent=0):
+        attrs = ' '.join(f'{k.replace("_", "-")}="{v}"' for k, v in self.attributes.items())
+        if attrs != "":
+            attrs = " " + attrs
 
+        tag_name = self.__class__.__name__.lower()
+        opening_tag = f"{' ' * indent}<{tag_name}{attrs}>"
+
+        if not self.children:
+            return f"{opening_tag}</{tag_name}>"
+
+        if isinstance(self, (Code, Pre)):
+            # 对于 Code 和 Pre 标签，不添加额外的缩进和换行
+            content = ''.join(
+                child.render() if isinstance(child, HTMLTag) else str(child)
+                for child in self.children
+            )
+            return f"{opening_tag}{content}</{tag_name}>"
+        else:
+            content = '\n'.join(
+                child.render(indent + 2) if isinstance(child, HTMLTag) else f"{' ' * (indent + 2)}{child}"
+                for child in self.children
+            )
+            return f"{opening_tag}\n{content}\n{' ' * indent}</{tag_name}>"
+
+class HTML(HTMLTag):
+    def render(self, indent=0):
+        return f"<!DOCTYPE html>\n{super().render(indent)}"
+
+class Meta(HTMLTag):
+    def render(self, indent=0):
+        attrs = ' '.join(f'{k.replace("_", "-")}="{v}"' for k, v in self.attributes.items())
+        return f"{' ' * indent}<meta {attrs}>"
+
+class Script(HTMLTag): pass
+class Head(HTMLTag):
+    default_children = [
+        Meta(charset="UTF-8"),
+        Meta(name="viewport", content="width=device-width, initial-scale=1.0"),
+        Script(src="https://unpkg.com/htmx.org@1.9.0"),
+    ]
+
+    @classmethod
+    def set_default_children(cls, new_default_children):
+        cls.default_children = new_default_children
+
+    def __init__(self, *children, **attributes):
+        all_children = self.default_children + list(children)
+        super().__init__(*all_children, **attributes)
+
+class Body(HTMLTag): pass
+class Title(HTMLTag): pass
+class Link(HTMLTag):
+    def render(self, indent=0):
+        attrs = ' '.join(f'{k.replace("_", "-")}="{v}"' for k, v in self.attributes.items())
+        return f"{' ' * indent}<link {attrs}>"
+class Style(HTMLTag): pass
+class H1(HTMLTag): pass
+class H2(HTMLTag): pass
+class H3(HTMLTag): pass
+class H4(HTMLTag): pass
+class H5(HTMLTag): pass
+class H6(HTMLTag): pass
+class Code(HTMLTag): pass
+class Form(HTMLTag): pass
+class Input(HTMLTag):
+    def render(self, indent=0):
+        attrs = ' '.join(f'{k.replace("_", "-")}="{v}"' for k, v in self.attributes.items())
+        return f"{' ' * indent}<input {attrs}>"
+
+class Button(HTMLTag): pass
+class Ul(HTMLTag): pass
+class Ol(HTMLTag):
+    def __init__(self, *children, start=None, **attributes):
+        super().__init__(*children, **attributes)
+        if start is not None:
+            self.attributes['start'] = start
+class Li(HTMLTag): pass
+class Div(HTMLTag): pass
+class Span(HTMLTag): pass
+class P(HTMLTag): pass
+class Pre(HTMLTag): pass
+class Br(HTMLTag):
+    def render(self, indent=0):
+        return f"{' ' * indent}<br>"
+
+prism_copy_to_clipboard_setting = [
+    Script(src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"),
+    Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.css"),
+    Style("""
+        .code-block-wrapper {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background-color: rgba(209, 213, 219, 0.8);
+            color: rgba(55, 65, 81, 1);
+            border-radius: 0.25rem;
+            border: 1px solid rgba(209, 213, 219, 1);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            z-index: 10;
+        }
+        .copy-button:hover {
+            background-color: rgba(229, 231, 235, 0.8);
+        }
+        pre {
+            margin-top: 0 !important;
+        }
+        .dark .copy-button {
+            background-color: rgba(55, 65, 81, 0.8);
+            color: rgba(209, 213, 219, 1);
+            border-color: rgba(75, 85, 99, 1);
+        }
+        .dark .copy-button:hover {
+            background-color: rgba(75, 85, 99, 0.8);
+        }
+    """),
+    Script("""
+        document.addEventListener("DOMContentLoaded", function() {
+            Prism.highlightAll();
+
+            document.querySelectorAll('pre').forEach(function(preElement) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'code-block-wrapper';
+                preElement.parentNode.insertBefore(wrapper, preElement);
+                wrapper.appendChild(preElement);
+
+                var copyButton = document.createElement('button');
+                copyButton.textContent = 'Copy';
+                copyButton.className = 'copy-button';
+                wrapper.appendChild(copyButton);
+
+                copyButton.addEventListener('click', function() {
+                    var codeElement = preElement.querySelector('code');
+                    var textArea = document.createElement('textarea');
+                    textArea.value = codeElement.textContent;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+
+                    copyButton.textContent = 'Copied!';
+                    copyButton.style.backgroundColor = 'rgba(34, 197, 94, 0.8)';
+                    copyButton.style.color = 'white';
+                    setTimeout(function() {
+                        copyButton.textContent = 'Copy';
+                        copyButton.style.backgroundColor = '';
+                        copyButton.style.color = '';
+                    }, 2000);
+                });
+            });
+        });
+    """),
+]
+
+prism_code_highlight_setting = [
+    Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css", id="prism-light"),
+    Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-okaidia.min.css", id="prism-dark"),
+    # Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css", id="prism-dark"),
+    Script(src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"),
+    Script(src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"),
+    Style("""
+        @media (prefers-color-scheme: dark) {
+            #prism-light { display: none; }
+        }
+        @media (prefers-color-scheme: light) {
+            #prism-dark { display: none; }
+        }
+    """)
+]
+
+prism_theme_switch_script = Script("""
+    document.addEventListener("DOMContentLoaded", function() {
+        Prism.highlightAll();
+    });
+""")
+
+prism_code_highlight_setting.append(prism_theme_switch_script)
+
+katex_setting = [
+    Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css"),
+    Script(src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"),
+    Script("""
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll(".math-display").forEach(function(el) {
+                katex.render(el.textContent, el, {displayMode: true});
+            });
+        });
+    """),
+]
+
+tailwind_setting = [
+    Script(src="https://cdn.tailwindcss.com"),
+    Script("""
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            light: '#3B82F6',
+                            dark: '#60A5FA',
+                        },
+                        background: {
+                            light: 'var(--background-light)',
+                            dark: 'var(--background-dark)',
+                        },
+                        content: {
+                            light: 'var(--content-light)',
+                            dark: 'var(--content-dark)',
+                        },
+                    },
+                },
+            },
+        }
+
+        // 监听系统主题变化
+        function updateTheme() {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // 初始化主题
+        updateTheme();
+
+        // 监听系统主题变化
+        window.matchMedia('(prefers-color-scheme: dark)').addListener(updateTheme);
+    """),
+    Style("""
+        :root {
+            --background-light: #ffffff;
+            --background-dark: #1a202c;
+            --content-light: #f7fafc;
+            --content-dark: #2d3748;
+        }
+    """),
+]
+
+def xue_initialize(katex=False, prism_code_highlight=False, prism_copy_to_clipboard=False, tailwind=False):
+    init_setting = [
+        Meta(charset="UTF-8"),
+        Meta(name="viewport", content="width=device-width, initial-scale=1.0"),
+        Script(src="https://unpkg.com/htmx.org@1.9.0"),
+    ]
+    if tailwind:
+        init_setting += tailwind_setting
+    if katex:
+        init_setting += katex_setting
+    if prism_code_highlight:
+        init_setting += prism_code_highlight_setting
+    if prism_copy_to_clipboard:
+        init_setting += prism_copy_to_clipboard_setting
+
+    Head.set_default_children(init_setting)
+
+
+
+
+xue_initialize(katex=True, prism_code_highlight=True, prism_copy_to_clipboard=True, tailwind=True)
 # 使用xue框架定义HTML结构
-
-from bs4 import BeautifulSoup
-import re
-
 def html_to_xue(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -37,23 +305,70 @@ def create_html_document(content):
     return HTML(
         Head(
             Title("Markdown Renderer"),
-            Script(src="https://polyfill.io/v3/polyfill.min.js?features=es6"),
-            Script(id="MathJax-script", async_="async", src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"),
-            Style("""
-                body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-                pre { background-color: #f0f0f0; padding: 10px; border-radius: 5px; }
-                code { font-family: monospace; }
-            """)
+            # Script(src="https://polyfill.io/v3/polyfill.min.js?features=es6"),
         ),
         Body(
-            H1("Markdown Renderer"),
-            Div(*content, id="content")
+            Div(
+                Div(content, class_="content-wrapper p-6 max-w-3xl mx-auto"),
+                class_="page-wrapper"
+            ),
+            class_="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
         )
     )
 
+def convert_entities_to_xue(entities):
+    html_body = Body(class_="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 max-w-3xl mx-auto")
+
+    for entity in entities:
+        if isinstance(entity, TitleEntity):
+            header_tag = globals()[f'H{entity.level}']
+            size_class = {
+                1: "text-4xl",
+                2: "text-3xl",
+                3: "text-2xl",
+                4: "text-xl",
+                5: "text-lg",
+                6: "text-base"
+            }.get(entity.level, "text-base")
+            html_body.children.append(header_tag(entity.content, class_=f"font-bold mb-4 text-gray-800 dark:text-gray-200 {size_class}"))
+            # header_tag = globals()[f'H{entity.level}']
+            # html_body.children.append(header_tag(entity.content, class_="font-bold mb-4 text-gray-800 dark:text-gray-200"))
+
+        elif isinstance(entity, CodeBlock):
+            code_block = Pre(
+                Code(entity.content, class_=f"language-{entity.language}"),
+                class_="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-x-auto"
+            )
+            wrapper = Div(code_block, class_="code-block-wrapper")
+            html_body.children.append(wrapper)
+
+        elif isinstance(entity, ListItem):
+            html_body.children.append(Li(entity.content, class_="mb-2"))
+
+        elif isinstance(entity, LinkEntity):
+            html_body.children.append(HTMLTag('a', entity.content, href=entity.url, class_="text-primary-light dark:text-primary-dark hover:underline"))
+
+        elif isinstance(entity, EmptyLine):
+            # html_body.children.append(Div(class_="h-4"))
+            pass
+
+        elif isinstance(entity, OrderList):
+            ol = Ol(Li(entity.content, class_="mb-2"), start=entity.index, class_="list-decimal list-inside mb-4")
+            html_body.children.append(ol)
+
+        elif isinstance(entity, Paragraph):
+            html_body.children.append(P(entity.content, class_="mb-4"))
+
+        elif isinstance(entity, DisplayMath):
+            math_div = Div(entity.content, class_="math-display bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-4")
+            html_body.children.append(math_div)
+
+    return html_body
+
+MARKDOWN_DIR = '.'
+app = FastAPI()
 @app.get("/{filename}", response_class=HTMLResponse)
 async def read_markdown(filename: str):
-    # ... (前面的代码保持不变)
     # 确保文件名以.md结尾
     if not filename.endswith('.md'):
         filename += '.md'
@@ -63,16 +378,24 @@ async def read_markdown(filename: str):
     # 检查文件是否存在
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
-    # 读取并渲染Markdown文件
-    with open(file_path, 'r', encoding='utf-8') as f:
-        md_content = f.read()
+
+    entities = get_entities_from_markdown_file(file_path)
+    html_doc = convert_entities_to_xue(entities)
+    # print(html_doc)
 
     # 创建HTML文档
-    doc = create_html_document(xue_content)
-    print(doc.render())
+    doc = create_html_document(html_doc)
+    # print(doc.render())
 
     return doc.render()
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        "__main__:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        ws="none",
+        # log_level="warning"
+    )

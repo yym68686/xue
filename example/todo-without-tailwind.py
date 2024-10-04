@@ -12,7 +12,6 @@ class Todo(BaseModel):
     id: str
     content: str
 
-# HTML构建系统
 class HTMLTag:
     def __init__(self, *children, **attributes):
         self.attributes = attributes
@@ -31,12 +30,16 @@ class HTMLTag:
         if not self.children:
             return f"{opening_tag}</{tag_name}>"
 
-        content = '\n'.join(
-            child.render(indent + 2) if isinstance(child, HTMLTag) else f"{' ' * (indent + 2)}{child}"
-            for child in self.children
-        )
-
-        return f"{opening_tag}\n{content}\n{' ' * indent}</{tag_name}>"
+        if isinstance(self, Code):
+            # 对于 Code 标签，不添加额外的缩进和换行
+            content = ''.join(str(child) for child in self.children)
+            return f"{opening_tag}{content}</{tag_name}>"
+        else:
+            content = '\n'.join(
+                child.render(indent + 2) if isinstance(child, HTMLTag) else f"{' ' * (indent + 2)}{child}"
+                for child in self.children
+            )
+            return f"{opening_tag}\n{content}\n{' ' * indent}</{tag_name}>"
 
 class HTML(HTMLTag):
     def render(self, indent=0):
@@ -65,6 +68,12 @@ class Link(HTMLTag):
         return f"{' ' * indent}<link {attrs}>"
 class Style(HTMLTag): pass
 class H1(HTMLTag): pass
+class H2(HTMLTag): pass
+class H3(HTMLTag): pass
+class H4(HTMLTag): pass
+class H5(HTMLTag): pass
+class H6(HTMLTag): pass
+class Code(HTMLTag): pass
 class Form(HTMLTag): pass
 class Input(HTMLTag):
     def render(self, indent=0):
@@ -73,9 +82,19 @@ class Input(HTMLTag):
 
 class Button(HTMLTag): pass
 class Ul(HTMLTag): pass
+class Ol(HTMLTag):
+    def __init__(self, *children, start=None, **attributes):
+        super().__init__(*children, **attributes)
+        if start is not None:
+            self.attributes['start'] = start
 class Li(HTMLTag): pass
 class Div(HTMLTag): pass
 class Span(HTMLTag): pass
+class P(HTMLTag): pass
+class Pre(HTMLTag): pass
+class Br(HTMLTag):
+    def render(self, indent=0):
+        return f"{' ' * indent}<br>"
 
 # 创建HTML文档结构
 def create_html_document():

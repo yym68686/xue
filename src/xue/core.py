@@ -90,6 +90,7 @@ class Pre(HTMLTag): pass
 class Br(HTMLTag):
     def render(self, indent=0):
         return f"{' ' * indent}<br>"
+class A(HTMLTag): pass
 
 prism_copy_to_clipboard_setting = [
     Script(src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"),

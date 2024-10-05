@@ -3,7 +3,7 @@ import os
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from parse_markdown import get_entities_from_markdown_file, Title as TitleEntity, CodeBlock, ListItem, Link as LinkEntity, EmptyLine, OrderList, Paragraph, DisplayMath
+from parse_markdown import get_entities_from_markdown_file, Title as TitleEntity, CodeBlock, ListItem, Link as LinkEntity, EmptyLine, OrderList, UnOrderList, Paragraph, DisplayMath, OrderedListItem, UnorderedListItem, InlineLink, InlineMath, CompositeEntity
 
 class HTMLTag:
     def __init__(self, *children, **attributes):
@@ -97,6 +97,7 @@ class Pre(HTMLTag): pass
 class Br(HTMLTag):
     def render(self, indent=0):
         return f"{' ' * indent}<br>"
+class A(HTMLTag): pass
 
 prism_copy_to_clipboard_setting = [
     Script(src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"),
@@ -317,9 +318,7 @@ def create_html_document(content):
     )
 
 def convert_entities_to_xue(entities):
-    html_body = Body(class_="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 max-w-3xl mx-auto")
-
-    for entity in entities:
+    def process_entity(entity):
         if isinstance(entity, TitleEntity):
             header_tag = globals()[f'H{entity.level}']
             size_class = {
@@ -330,42 +329,64 @@ def convert_entities_to_xue(entities):
                 5: "text-lg",
                 6: "text-base"
             }.get(entity.level, "text-base")
-            html_body.children.append(header_tag(entity.content, class_=f"font-bold mb-4 text-gray-800 dark:text-gray-200 {size_class}"))
-            # header_tag = globals()[f'H{entity.level}']
-            # html_body.children.append(header_tag(entity.content, class_="font-bold mb-4 text-gray-800 dark:text-gray-200"))
+            return header_tag(entity.content, class_=f"font-bold mb-4 text-gray-800 dark:text-gray-200 {size_class}")
 
         elif isinstance(entity, CodeBlock):
             code_block = Pre(
                 Code(entity.content, class_=f"language-{entity.language}"),
                 class_="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-x-auto"
             )
-            wrapper = Div(code_block, class_="code-block-wrapper")
-            html_body.children.append(wrapper)
+            return Div(code_block, class_="code-block-wrapper")
 
-        elif isinstance(entity, ListItem):
-            html_body.children.append(Li(entity.content, class_="mb-2"))
+        # elif isinstance(entity, ListItem):
+        #     print("entity", entity)
+        #     print("entity.content", entity.content)
+        #     print("entity.children", entity.children)
+        #     return Li(process_children(entity.children) if hasattr(entity, 'children') else entity.content, class_="mb-2")
 
-        elif isinstance(entity, LinkEntity):
-            html_body.children.append(HTMLTag('a', entity.content, href=entity.url, class_="text-primary-light dark:text-primary-dark hover:underline"))
+        elif isinstance(entity, LinkEntity) or isinstance(entity, InlineLink):
+            return A(entity.content, href=entity.url, class_="mr-2 text-primary-light dark:text-primary-dark hover:underline")
 
         elif isinstance(entity, EmptyLine):
-            # html_body.children.append(Div(class_="h-4"))
-            pass
+            return None
 
-        elif isinstance(entity, OrderList):
-            ol = Ol(Li(entity.content, class_="mb-2"), start=entity.index, class_="list-decimal list-inside mb-4")
-            html_body.children.append(ol)
+        elif isinstance(entity, OrderedListItem):
+            content = process_children(entity.children) if hasattr(entity, 'children') else [entity.content]
+            return Ol(Li(*content, class_="mb-2"), start=entity.index, class_="list-decimal list-inside mb-4")
+
+        elif isinstance(entity, UnorderedListItem):
+            content = process_children(entity.children) if hasattr(entity, 'children') else [entity.content]
+            return Ul(Li(Div(*content, class_ = "flex items-center"), class_="mb-0"), class_="list-disc list-inside mb-0")
 
         elif isinstance(entity, Paragraph):
-            html_body.children.append(P(entity.content, class_="mb-4"))
+            return P(process_inline_elements(entity.content), class_="mr-2 whitespace-nowrap")
 
         elif isinstance(entity, DisplayMath):
-            math_div = Div(entity.content, class_="math-display bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-4")
-            html_body.children.append(math_div)
+            return Div(entity.content, class_="math-display bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-4")
+
+        elif isinstance(entity, InlineMath):
+            return Span(entity.content, class_="math-inline")
+
+        elif isinstance(entity, CompositeEntity):
+            return Div(*[process_entity(child) for child in entity.children], class_="composite-entity flex items-center mb-0")
+
+        else:
+            return str(entity)
+
+    def process_children(children):
+        return [Span(process_entity(child), class_="mr-2 flex-shrink-0") for child in children if child is not None if process_entity(child) is not None]
+
+    def process_inline_elements(content):
+        # 这里可以添加处理行内元素的逻辑，比如链接、行内数学公式等
+        # 现在我们简单地返回内容
+        return content
+
+    html_body = Body(class_="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 max-w-3xl mx-auto")
+    html_body.children.extend(process_children(entities))
 
     return html_body
 
-MARKDOWN_DIR = '.'
+MARKDOWN_DIR = '/Users/yanyuming/Downloads/GitHub/PurePage/'
 app = FastAPI()
 @app.get("/{filename}", response_class=HTMLResponse)
 async def read_markdown(filename: str):
@@ -385,7 +406,7 @@ async def read_markdown(filename: str):
 
     # 创建HTML文档
     doc = create_html_document(html_doc)
-    # print(doc.render())
+    print(doc.render())
 
     return doc.render()
 

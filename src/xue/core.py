@@ -46,13 +46,18 @@ class Head(HTMLTag):
         Meta(name="viewport", content="width=device-width, initial-scale=1.0"),
         Script(src="https://unpkg.com/htmx.org@1.9.0"),
     ]
+    additional_scripts = []
 
     @classmethod
     def set_default_children(cls, new_default_children):
         cls.default_children = new_default_children
 
+    @classmethod
+    def add_script(cls, script_content):
+        cls.additional_scripts.append(Script(script_content))
+
     def __init__(self, *children, **attributes):
-        all_children = self.default_children + list(children)
+        all_children = self.default_children + list(children) + self.additional_scripts
         super().__init__(*all_children, **attributes)
 
 class Body(HTMLTag): pass
@@ -273,3 +278,6 @@ def xue_initialize(katex=False, prism_code_highlight=False, prism_copy_to_clipbo
         init_setting += prism_copy_to_clipboard_setting
 
     Head.set_default_children(init_setting)
+
+DROPDOWN_SCRIPT_ADDED = False
+DROPDOWN_MENU_SCRIPT_ADDED = False

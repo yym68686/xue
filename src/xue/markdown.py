@@ -427,14 +427,18 @@ def convert_entities_to_xue(entities):
 
         elif isinstance(entity, OrderedListItem):
             content = process_children(entity.children) if hasattr(entity, 'children') else [entity.content]
-            return Ol(Li(*content, class_="mb-2"), start=entity.index, class_="list-decimal list-inside mb-4")
+            return Ol(Li(*content, class_="mb-2"), start=entity.index, class_="list-decimal mb-0 ml-4")
+            # return Ol(Li(*content, class_="mb-2"), start=entity.index, class_="list-decimal list-inside mb-4")
+            # return Ol(Li(Div(*content, class_ = "flex items-center"), class_="mb-0"), class_="list-decimal mb-0 ml-4")
 
         elif isinstance(entity, UnorderedListItem):
             content = process_children(entity.children) if hasattr(entity, 'children') else [entity.content]
-            return Ul(Li(Div(*content, class_ = "flex items-center"), class_="mb-0"), class_="list-disc list-inside mb-0")
+            # return Ul(Li(*content, class_="mb-0"), class_="list-disc list-inside mb-0")
+            return Ul(Li(Div(*content, class_ = "flex items-center"), class_="mb-0"), class_="list-disc mb-0 ml-4")
 
         elif isinstance(entity, Paragraph):
-            return P(process_inline_elements(entity.content), class_="mr-2")
+            # return Span(process_inline_elements(entity.content), class_="mr-2 flex-shrink-0")
+            return P(process_inline_elements(entity.content), class_="mr-2 mb-0")
 
         elif isinstance(entity, ImageEntity):
             return Image(src=entity.content, alt=entity.alt_text, class_="max-w-full h-auto rounded-lg shadow-lg mb-4")
@@ -446,13 +450,25 @@ def convert_entities_to_xue(entities):
             return Span(entity.content, class_="math-inline")
 
         elif isinstance(entity, CompositeEntity):
-            return Div(*[process_entity(child) for child in entity.children], class_="composite-entity flex items-center mb-0")
+            return Div(*[process_entity(child) for child in entity.children], class_="composite-entity flex items-center mb-2")
 
         else:
             return str(entity)
 
     def process_children(children):
+        # result = []
+        # for child in children:
+        #     if child is not None:
+        #         item = process_entity(child)
+        #         if item is not None:
+        #             if isinstance(item, (Div, Span, H1, H2, H3, H4, H5, H6)):
+        #                 result.append(item)
+        #             else:
+        #                 result.append(Span(item, class_="mr-2 flex-shrink-0"))
+        # return result
+
         return [Span(process_entity(child), class_="mr-2 flex-shrink-0") for child in children if child is not None if process_entity(child) is not None]
+        # return [process_entity(child) for child in children if child is not None if process_entity(child) is not None]
 
     def process_inline_elements(content):
         # 这里可以添加处理行内元素的逻辑，比如链接、行内数学公式等

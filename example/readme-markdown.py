@@ -345,7 +345,7 @@ async def read_markdown(filename: str):
 
     # 创建HTML文档
     doc = create_html_document(html_doc)
-    print(doc.render())
+    # print(doc.render())
 
     return doc.render()
 

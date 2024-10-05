@@ -46,18 +46,17 @@ class Head(HTMLTag):
         Meta(name="viewport", content="width=device-width, initial-scale=1.0"),
         Script(src="https://unpkg.com/htmx.org@1.9.0"),
     ]
-    additional_scripts = []
 
     @classmethod
     def set_default_children(cls, new_default_children):
         cls.default_children = new_default_children
 
     @classmethod
-    def add_script(cls, script_content):
-        cls.additional_scripts.append(Script(script_content))
+    def add_default_children(cls, children):
+        cls.default_children.extend(children)
 
     def __init__(self, *children, **attributes):
-        all_children = self.default_children + list(children) + self.additional_scripts
+        all_children = self.default_children + list(children)
         super().__init__(*all_children, **attributes)
 
 class Body(HTMLTag): pass
@@ -100,6 +99,22 @@ class Image(HTMLTag):
     def render(self, indent=0):
         attrs = ' '.join(f'{k.replace("_", "-")}="{v}"' for k, v in self.attributes.items())
         return f"{' ' * indent}<img {attrs}>"
+
+class Raw(HTMLTag): pass
+class LazyIcon(HTMLTag):
+    def __init__(self, icon_name, label, class_="mr-2 h-4 w-4 inline"):
+        super().__init__()
+        self.icon_name = icon_name
+        self.label = label
+        self.class_ = class_
+
+    def render(self, indent=0):
+        url = f"https://unpkg.com/lucide-static@latest/icons/{self.icon_name}.svg"
+        return Div(
+            Image(src=url, alt=f"{self.label} icon", class_=f"{self.class_} lazy-icon", style="display: none;"),
+            Raw(f'<svg class="{self.class_}" data-icon="{self.icon_name}"></svg>'),
+            class_="inline-block icon-container",
+        ).render(indent)
 
 prism_copy_to_clipboard_setting = [
     Script(src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"),

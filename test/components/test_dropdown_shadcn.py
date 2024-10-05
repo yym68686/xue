@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from xue import HTML, Head, Body, Div, Script, xue_initialize
+from xue import HTML, Head, Body, Div, Script, xue_initialize, Style
 from xue.components import dropdown
 
 xue_initialize(tailwind=True)
@@ -23,22 +23,22 @@ async def root():
 @app.get("/dropdown-menu/{menu_id}", response_class=HTMLResponse)
 async def get_dropdown_menu_content(menu_id: str):
     items = [
-        {"icon": "👤", "label": "Profile", "shortcut": "⇧⌘P"},
-        {"icon": "💳", "label": "Billing", "shortcut": "⌘B"},
-        {"icon": "⚙️", "label": "Settings", "shortcut": "⌘S"},
-        {"icon": "⌨️", "label": "Keyboard shortcuts", "shortcut": "⌘K"},
+        {"icon": "user", "label": "Profile", "shortcut": "⇧⌘P"},
+        {"icon": "credit-card", "label": "Billing", "shortcut": "⌘B"},
+        {"icon": "settings", "label": "Settings", "shortcut": "⌘S"},
+        {"icon": "keyboard", "label": "Keyboard shortcuts", "shortcut": "⌘K"},
         "separator",
-        {"icon": "👥", "label": "Team"},
-        {"icon": "➕", "label": "New Team", "shortcut": "⌘+T"},
+        {"icon": "users", "label": "Team"},
+        {"icon": "plus", "label": "New Team", "shortcut": "⌘+T"},
         "separator",
-        {"icon": "🐙", "label": "GitHub"},
-        {"icon": "🛟", "label": "Support"},
-        {"icon": "☁️", "label": "API", "disabled": True},
+        {"icon": "github", "label": "GitHub"},
+        {"icon": "life-buoy", "label": "Support"},
+        {"icon": "cloud", "label": "API", "disabled": True},
         "separator",
-        {"icon": "🚪", "label": "Log out", "shortcut": "⇧⌘Q"},
+        {"icon": "log-out", "label": "Log out", "shortcut": "⇧⌘Q"},
     ]
     result = dropdown.dropdown_menu_content(menu_id, items).render()
-    # print("result", result)
+    print("result", result)
     return result
 
 if __name__ == "__main__":

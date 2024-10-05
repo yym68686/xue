@@ -1,5 +1,4 @@
-from ..core import Div, Button, A, Ul, Li, Span, DROPDOWN_SCRIPT_ADDED, DROPDOWN_MENU_SCRIPT_ADDED, Head
-
+from ..core import Div, Button, A, Ul, Li, Span, DROPDOWN_SCRIPT_ADDED, DROPDOWN_MENU_SCRIPT_ADDED, Head, Image, Raw, LazyIcon, Script, Style
 def render(text, **kwargs):
     button_attributes = {
        "class_": "px-4 py-2 bg-gray-200 rounded",
@@ -24,42 +23,91 @@ def render(text, **kwargs):
 def dropdown_menu(label):
     global DROPDOWN_MENU_SCRIPT_ADDED
     if not DROPDOWN_MENU_SCRIPT_ADDED:
-        Head.add_script("""
-            document.addEventListener('click', function(event) {
-                var dropdowns = document.querySelectorAll('[id$="-content"]');
-                var triggers = document.querySelectorAll('[id$="-trigger"]');
+        Head.add_default_children([
+            # 点击其他地方关闭下拉菜单
+            Script("""
+                document.addEventListener('click', function(event) {
+                    var dropdowns = document.querySelectorAll('[id$="-content"]');
+                    var triggers = document.querySelectorAll('[id$="-trigger"]');
 
-                dropdowns.forEach(function(dropdown) {
-                    if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
-                        dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
-                        dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                    dropdowns.forEach(function(dropdown) {
+                        if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
+                            dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+                            dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                        }
+                    });
+
+                    if (event.target.closest('[id$="-trigger"]')) {
+                        var triggerId = event.target.closest('[id$="-trigger"]').id;
+                        var dropdownId = triggerId.replace('-trigger', '-content');
+                        var dropdown = document.getElementById(dropdownId);
+
+                        if (dropdown.classList.contains('opacity-0')) {
+                            dropdown.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                            dropdown.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+                        } else {
+                            dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+                            dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                        }
                     }
                 });
 
-                if (event.target.closest('[id$="-trigger"]')) {
-                    var triggerId = event.target.closest('[id$="-trigger"]').id;
-                    var dropdownId = triggerId.replace('-trigger', '-content');
-                    var dropdown = document.getElementById(dropdownId);
-
-                    if (dropdown.classList.contains('opacity-0')) {
-                        dropdown.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                        dropdown.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
-                    } else {
-                        dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
-                        dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                htmx.on('htmx:afterSwap', function(event) {
+                    if (event.detail.target.id.endsWith('-content')) {
+                        setTimeout(function() {
+                            event.detail.target.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                            event.detail.target.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+                        }, 0);
                     }
+                });
+            """),
+            # 加载懒加载的图标
+            Script("""
+                function loadSVGContent() {
+                    console.log('loadSVGContent called');
+                    document.querySelectorAll('.icon-container').forEach(container => {
+                        const img = container.querySelector('img.lazy-icon');
+                        const svg = container.querySelector('svg');
+                        if (img && svg) {
+                            console.log('Processing image:', img.src);
+                            fetch(img.src)
+                                .then(response => response.text())
+                                .then(svgContent => {
+                                    console.log('SVG content loaded for:', img.src);
+                                    const parser = new DOMParser();
+                                    const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+                                    const newSvg = svgDoc.querySelector('svg');
+                                    if (newSvg) {
+                                        newSvg.classList = svg.classList;
+                                        newSvg.removeAttribute('width');
+                                        newSvg.removeAttribute('height');
+                                        svg.parentNode.replaceChild(newSvg, svg);
+                                        img.style.display = 'none';
+                                    }
+                                })
+                                .catch(error => console.error('Error loading SVG:', error));
+                        }
+                    });
                 }
-            });
 
-            htmx.on('htmx:afterSwap', function(event) {
-                if (event.detail.target.id.endsWith('-content')) {
-                    setTimeout(function() {
-                        event.detail.target.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                        event.detail.target.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
-                    }, 0);
+                document.addEventListener('DOMContentLoaded', loadSVGContent);
+                document.body.addEventListener('htmx:afterSettle', loadSVGContent);
+            """),
+            # 在 htmx:afterSettle 事件后调用 loadSVGContent
+            Script("""
+                htmx.on('htmx:afterSettle', function(event) {
+                    loadSVGContent();
+                });
+            """),
+            # 添加样式
+            Style("""
+                .icon-container svg {
+                    display: inline-block;
+                    vertical-align: middle;
                 }
-            });
-        """)
+            """),
+        ])
+
         DROPDOWN_MENU_SCRIPT_ADDED = True
     menu_id = f"dropdown-menu-{label.lower().replace(' ', '-')}"
     return Div(
@@ -79,16 +127,67 @@ def dropdown_menu(label):
         class_="relative inline-block text-left"
     )
 
+def get_lucide_icon_url(icon_name):
+    return f"https://unpkg.com/lucide-static@latest/icons/{icon_name}.svg"
+
+# import httpx
+# def get_lucide_icon_svg(icon_name):
+#     url = f"https://unpkg.com/lucide-static@latest/icons/{icon_name}.svg"
+#     response = httpx.get(url, follow_redirects=True)
+#     print("response.status_code == 200", response.status_code == 200)
+#     if response.status_code == 200:
+#         svg_content = response.text
+#         # 移除 width 和 height 属性,添加 class
+#         svg_content = svg_content.replace(' width="24"', '').replace(' height="24"', '')
+#         svg_content = svg_content.replace('<svg', '<svg class="h-4 w-4 mr-2 inline"')
+#         return svg_content
+#     else:
+#         print(f"Failed to fetch icon: {icon_name}")
+#         print("response", response.text)
+#     return ""
+
+# from functools import lru_cache
+# import httpx
+# icon_cache = {}
+
+# async def get_lucide_icon_svg(icon_name):
+#     if icon_name in icon_cache:
+#         return icon_cache[icon_name]
+
+#     url = f"https://unpkg.com/lucide-static@latest/icons/{icon_name}.svg"
+#     async with httpx.AsyncClient() as client:
+#         try:
+#             response = await client.get(url, follow_redirects=True, timeout=5.0)
+#             if response.status_code == 200:
+#                 svg_content = response.text
+#                 svg_content = svg_content.replace(' width="24"', '').replace(' height="24"', '')
+#                 svg_content = svg_content.replace('<svg', '<svg class="h-4 w-4 mr-2 inline fill-current"')
+#                 icon_cache[icon_name] = svg_content
+#                 return svg_content
+#             else:
+#                 print(f"Failed to fetch icon: {icon_name}")
+#                 return ""
+#         except httpx.RequestError as e:
+#             print(f"An error occurred while requesting {e.request.url!r}.")
+#             return ""
+
+# @lru_cache(maxsize=100)
+# def get_cached_icon(icon_name):
+#     return icon_cache.get(icon_name, "")
+
 def dropdown_menu_content(menu_id, items):
     menu_items = []
     for item in items:
         if item == "separator":
             menu_items.append(Li(Div(class_="my-1 h-px bg-gray-200")))
         elif isinstance(item, dict):
+            icon = LazyIcon(item['icon'], item['label']) if 'icon' in item else ""
+            # icon = Raw(get_lucide_icon_svg(item['icon'])) if 'icon' in item else ""
+            # icon = Image(src=get_lucide_icon_url(item['icon']), alt=f"{item['label']} icon", class_="mr-2 h-4 w-4 inline") if 'icon' in item else ""
             if item.get('disabled'):
                 menu_items.append(Li(
                     Div(
-                        Span(item['icon'], class_="mr-2 h-4 w-4 inline-block opacity-50"),
+                        icon,
                         Span(item['label'], class_="opacity-50"),
                         Span(item.get('shortcut', ''), class_="ml-auto text-xs text-gray-400 opacity-50"),
                         class_="flex items-center px-4 py-2 text-sm text-gray-500 cursor-not-allowed"
@@ -97,7 +196,7 @@ def dropdown_menu_content(menu_id, items):
             else:
                 menu_items.append(Li(
                     A(
-                        Span(item['icon'], class_="mr-2 h-4 w-4 inline-block"),
+                        icon,
                         Span(item['label']),
                         Span(item.get('shortcut', ''), class_="ml-auto text-xs text-gray-400"),
                         href=item.get('href', '#'),

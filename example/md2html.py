@@ -1,4 +1,4 @@
-from parse_markdown import *
+from xue.markdown import *
 from xue import *
 
 def convert_entities_to_html(entities):

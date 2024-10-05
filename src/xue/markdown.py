@@ -1,5 +1,6 @@
 import os
 import re
+from .core import *
 
 class MarkdownEntity:
     def __init__(self, content: str = "", entity_type: str = ""):
@@ -12,9 +13,9 @@ class MarkdownEntity:
     def copy(self):
         return self.__class__(self.content)
 
-class Title(MarkdownEntity):
+class TitleEntity(MarkdownEntity):
     def __init__(self, content: str = "", level: int = 1):
-        super().__init__(content, 'Title')
+        super().__init__(content, 'TitleEntity')
         self.level = level
 
 class CodeBlock(MarkdownEntity):
@@ -26,10 +27,16 @@ class ListItem(MarkdownEntity):
     def __init__(self, content: str = ""):
         super().__init__(content, 'ListItem')
 
-class Link(MarkdownEntity):
+class LinkEntity(MarkdownEntity):
     def __init__(self, content: str = "", url: str = ""):
-        super().__init__(content, 'Link')
+        super().__init__(content, 'LinkEntity')
         self.url = url
+
+class ImageEntity(MarkdownEntity):
+    def __init__(self, content: str = "", url: str = ""):
+        super().__init__(content, 'ImageEntity')
+        self.url = url
+        self.alt_text = content
 
 class EmptyLine(MarkdownEntity):
     def __init__(self, content: str = ""):
@@ -156,6 +163,14 @@ def parse_markdown(lines, delimiter='\n'):
     list_stack = []
 
     for line in lines:
+        # print(repr(line))
+        # print('[' in line)
+        # print(']' in line )
+        # print( '(' in line and ')' in line )
+        # print( line.count('[') == 1 )
+        # print(line.strip().endswith(')') )
+        # print(line.strip().startswith('!') )
+        # print( line.count('!') == 1)
         if line == delimiter:
             continue
         if line.startswith('$$') and not in_code_block:
@@ -173,7 +188,7 @@ def parse_markdown(lines, delimiter='\n'):
         elif line.startswith('#') and not in_code_block and not in_math_block:
             level = line.count('#')
             title_content = line[level:].strip()
-            entities.append(Title(title_content, level))
+            entities.append(TitleEntity(title_content, level))
         elif line.startswith('```'):
             if in_code_block and language:
                 entities.append(CodeBlock('\n'.join(current_code_block), language))
@@ -185,14 +200,22 @@ def parse_markdown(lines, delimiter='\n'):
                 language = line.lstrip('`').strip()
         elif in_code_block:
             current_code_block.append(line)
-        elif '[' in line and ']' in line and '(' in line and ')' in line and line.count('[') == 1 and line.strip().endswith(')') and line.strip().startswith('['):
+        elif '[' in line and ']' in line and '(' in line and ')' in line and line.count('[') == 1 and line.strip().endswith(')') and line.strip().startswith('[') and line.count('!') == 0:
             start = line.index('[') + 1
             end = line.index(']')
             url_start = line.index('(') + 1
             url_end = line.index(')')
             link_text = line[start:end].strip()
             link_url = line[url_start:url_end].strip()
-            entities.append(Link(link_text, link_url))
+            entities.append(LinkEntity(link_text, link_url))
+        elif '[' in line and ']' in line and '(' in line and ')' in line and line.count('[') == 1 and line.strip().endswith(')') and line.strip().startswith('![') and line.count('!') == 1:
+            start = line.index('[') + 1
+            end = line.index(']')
+            url_start = line.index('(') + 1
+            url_end = line.index(')')
+            link_text = line[start:end].strip()
+            link_url = line[url_start:url_end].strip()
+            entities.append(ImageEntity(link_text, link_url))
         else:
             # Check for list items
             list_match = re.match(r'^(\s*)([*+-]|\d+\.)\s(.+)$', line)
@@ -240,7 +263,7 @@ def parse_markdown(lines, delimiter='\n'):
     return entities
 
 def convert_entity_to_text(entity, indent=''):
-    if isinstance(entity, Title):
+    if isinstance(entity, TitleEntity):
         return f"{'#' * entity.level} {entity.content}"
     elif isinstance(entity, CodeBlock):
         code = entity.content.lstrip('\n').rstrip('\n')
@@ -255,8 +278,10 @@ def convert_entity_to_text(entity, indent=''):
         prefix = f"{indent}{entity.index}. " if isinstance(entity, OrderedListItem) else f"{indent}- "
         content = convert_entities_to_text(entity.children, inline=True)
         return f"{prefix}{content}"
-    elif isinstance(entity, Link):
+    elif isinstance(entity, LinkEntity):
         return f"[{entity.content}]({entity.url})"
+    elif isinstance(entity, ImageEntity):
+        return f"![{entity.content}]({entity.url})"
     elif isinstance(entity, InlineLink):
         return f"[{entity.content}]({entity.url})"
     elif isinstance(entity, EmptyLine):
@@ -274,17 +299,21 @@ def convert_entity_to_text(entity, indent=''):
 
 def convert_entities_to_text(entities, indent='', inline=False):
     result = []
-    for entity in entities:
+    for index, entity in enumerate(entities):
         converted = convert_entity_to_text(entity, indent)
         if inline:
             result.append(converted)
-        else:
+        elif index != len(entities) - 1 or (index == len(entities) - 1 and isinstance(entities[-1], EmptyLine)):
             result.append(converted + '\n')
+        else:
+            result.append(converted)
 
+    if result[-1] == '\n':
+        result = result[:-1]
     if inline:
         return ''.join(result).rstrip()
     else:
-        return ''.join(result).rstrip('\n')
+        return ''.join(result)
 
 def save_text_to_file(text: str, file_path: str):
     with open(file_path, 'w', encoding='utf-8') as file:
@@ -363,6 +392,78 @@ def check_markdown_parse(markdown_file_path, output_file_path="output.md", delim
 
     return parsed_entities
 
+def convert_entities_to_xue(entities):
+    def process_entity(entity):
+        if isinstance(entity, TitleEntity):
+            header_tag = globals()[f'H{entity.level}']
+            size_class = {
+                1: "text-4xl",
+                2: "text-3xl",
+                3: "text-2xl",
+                4: "text-xl",
+                5: "text-lg",
+                6: "text-base"
+            }.get(entity.level, "text-base")
+            return header_tag(entity.content, class_=f"font-bold mb-4 text-gray-800 dark:text-gray-200 {size_class}")
+
+        elif isinstance(entity, CodeBlock):
+            code_block = Pre(
+                Code(entity.content, class_=f"language-{entity.language}"),
+                class_="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-x-auto"
+            )
+            return Div(code_block, class_="code-block-wrapper")
+
+        # elif isinstance(entity, ListItem):
+        #     print("entity", entity)
+        #     print("entity.content", entity.content)
+        #     print("entity.children", entity.children)
+        #     return Li(process_children(entity.children) if hasattr(entity, 'children') else entity.content, class_="mb-2")
+
+        elif isinstance(entity, LinkEntity) or isinstance(entity, InlineLink):
+            return A(entity.content, href=entity.url, class_="mr-2 text-primary-light dark:text-primary-dark hover:underline")
+
+        elif isinstance(entity, EmptyLine):
+            return None
+
+        elif isinstance(entity, OrderedListItem):
+            content = process_children(entity.children) if hasattr(entity, 'children') else [entity.content]
+            return Ol(Li(*content, class_="mb-2"), start=entity.index, class_="list-decimal list-inside mb-4")
+
+        elif isinstance(entity, UnorderedListItem):
+            content = process_children(entity.children) if hasattr(entity, 'children') else [entity.content]
+            return Ul(Li(Div(*content, class_ = "flex items-center"), class_="mb-0"), class_="list-disc list-inside mb-0")
+
+        elif isinstance(entity, Paragraph):
+            return P(process_inline_elements(entity.content), class_="mr-2")
+
+        elif isinstance(entity, ImageEntity):
+            return Image(src=entity.content, alt=entity.alt_text, class_="max-w-full h-auto rounded-lg shadow-lg mb-4")
+
+        elif isinstance(entity, DisplayMath):
+            return Div(entity.content, class_="math-display bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-4")
+
+        elif isinstance(entity, InlineMath):
+            return Span(entity.content, class_="math-inline")
+
+        elif isinstance(entity, CompositeEntity):
+            return Div(*[process_entity(child) for child in entity.children], class_="composite-entity flex items-center mb-0")
+
+        else:
+            return str(entity)
+
+    def process_children(children):
+        return [Span(process_entity(child), class_="mr-2 flex-shrink-0") for child in children if child is not None if process_entity(child) is not None]
+
+    def process_inline_elements(content):
+        # 这里可以添加处理行内元素的逻辑，比如链接、行内数学公式等
+        # 现在我们简单地返回内容
+        return content
+
+    html_body = Body(class_="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 max-w-3xl mx-auto")
+    html_body.children.extend(process_children(entities))
+
+    return html_body
+
 if __name__ == '__main__':
     # markdown_file_path = "README_CN.md"  # 替换为你的 Markdown 文件路径
 
@@ -381,5 +482,6 @@ if __name__ == '__main__':
     # process_markdown_entities_and_save(parsed_entities, output_file_path, raw_text=markdown_text)
 
     # print(f"Markdown 文档已保存到 {output_file_path}")
-    check_markdown_parse("/Users/yanyuming/Downloads/GitHub/PurePage/index.md", "output.md")
+    # check_markdown_parse("/Users/yanyuming/Downloads/GitHub/PurePage/index.md", "output.md")
+    check_markdown_parse("/Users/yanyuming/Downloads/GitHub/PurePage/post/ViT/index.md", "output.md")
     # check_markdown_parse("/Users/yanyuming/Downloads/GitHub/xue/README.md", "output.md")

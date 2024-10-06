@@ -101,6 +101,7 @@ class Image(HTMLTag):
         return f"{' ' * indent}<img {attrs}>"
 
 class Raw(HTMLTag): pass
+class Label(HTMLTag): pass
 class LazyIcon(HTMLTag):
     def __init__(self, icon_name, label, class_="mr-2 h-4 w-4 inline"):
         super().__init__()
@@ -296,3 +297,4 @@ def xue_initialize(katex=False, prism_code_highlight=False, prism_copy_to_clipbo
 
 DROPDOWN_SCRIPT_ADDED = False
 DROPDOWN_MENU_SCRIPT_ADDED = False
+SELECT_SCRIPT_ADDED = False

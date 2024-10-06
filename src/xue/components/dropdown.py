@@ -130,51 +130,6 @@ def dropdown_menu(label):
 def get_lucide_icon_url(icon_name):
     return f"https://unpkg.com/lucide-static@latest/icons/{icon_name}.svg"
 
-# import httpx
-# def get_lucide_icon_svg(icon_name):
-#     url = f"https://unpkg.com/lucide-static@latest/icons/{icon_name}.svg"
-#     response = httpx.get(url, follow_redirects=True)
-#     print("response.status_code == 200", response.status_code == 200)
-#     if response.status_code == 200:
-#         svg_content = response.text
-#         # 移除 width 和 height 属性,添加 class
-#         svg_content = svg_content.replace(' width="24"', '').replace(' height="24"', '')
-#         svg_content = svg_content.replace('<svg', '<svg class="h-4 w-4 mr-2 inline"')
-#         return svg_content
-#     else:
-#         print(f"Failed to fetch icon: {icon_name}")
-#         print("response", response.text)
-#     return ""
-
-# from functools import lru_cache
-# import httpx
-# icon_cache = {}
-
-# async def get_lucide_icon_svg(icon_name):
-#     if icon_name in icon_cache:
-#         return icon_cache[icon_name]
-
-#     url = f"https://unpkg.com/lucide-static@latest/icons/{icon_name}.svg"
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             response = await client.get(url, follow_redirects=True, timeout=5.0)
-#             if response.status_code == 200:
-#                 svg_content = response.text
-#                 svg_content = svg_content.replace(' width="24"', '').replace(' height="24"', '')
-#                 svg_content = svg_content.replace('<svg', '<svg class="h-4 w-4 mr-2 inline fill-current"')
-#                 icon_cache[icon_name] = svg_content
-#                 return svg_content
-#             else:
-#                 print(f"Failed to fetch icon: {icon_name}")
-#                 return ""
-#         except httpx.RequestError as e:
-#             print(f"An error occurred while requesting {e.request.url!r}.")
-#             return ""
-
-# @lru_cache(maxsize=100)
-# def get_cached_icon(icon_name):
-#     return icon_cache.get(icon_name, "")
-
 def dropdown_menu_content(menu_id, items):
     menu_items = []
     for item in items:
@@ -182,8 +137,6 @@ def dropdown_menu_content(menu_id, items):
             menu_items.append(Li(Div(class_="my-1 h-px bg-gray-200")))
         elif isinstance(item, dict):
             icon = LazyIcon(item['icon'], item['label']) if 'icon' in item else ""
-            # icon = Raw(get_lucide_icon_svg(item['icon'])) if 'icon' in item else ""
-            # icon = Image(src=get_lucide_icon_url(item['icon']), alt=f"{item['label']} icon", class_="mr-2 h-4 w-4 inline") if 'icon' in item else ""
             if item.get('disabled'):
                 menu_items.append(Li(
                     Div(
@@ -257,20 +210,6 @@ def dropdown_content(items, id, visible=False):
         id=f"{id}-content",
         class_=f"absolute mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none transform transition-all duration-200 ease-in-out {visibility_class}"
     )
-
-# def dropdown_content(items):
-#     return Ul(
-#         *[Li(
-#             Button(
-#                 item,
-#                 class_="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-#             )
-#         ) for item in items],
-#         class_="py-1",
-#         role="menu",
-#         aria_orientation="vertical",
-#         aria_labelledby="options-menu"
-#     )
 
 def custom_dropdown(label, items, id, button_class="", menu_class=""):
     default_button_class = "flex items-center px-4 py-2 bg-white border rounded-md shadow-sm hover:bg-gray-50"

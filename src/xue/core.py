@@ -20,13 +20,13 @@ class HTMLTag:
             # 对于 Code 和 Pre 标签，不添加额外的缩进和换行
             content = ''.join(
                 child.render() if isinstance(child, HTMLTag) else str(child)
-                for child in self.children
+                for child in self.children if child is not None  # 过滤掉 None 值
             )
             return f"{opening_tag}{content}</{tag_name}>"
         else:
             content = '\n'.join(
                 child.render(indent + 2) if isinstance(child, HTMLTag) else f"{' ' * (indent + 2)}{child}"
-                for child in self.children
+                for child in self.children if child is not None  # 过滤掉 None 值
             )
             return f"{opening_tag}\n{content}\n{' ' * indent}</{tag_name}>"
 

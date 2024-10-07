@@ -246,12 +246,12 @@ tailwind_setting = [
                             dark: '#60A5FA',
                         },
                         background: {
-                            light: 'var(--background-light)',
-                            dark: 'var(--background-dark)',
+                            light: '#ffffff',
+                            dark: '#1a202c',
                         },
                         content: {
-                            light: 'var(--content-light)',
-                            dark: 'var(--content-dark)',
+                            light: '#f7fafc',
+                            dark: '#2d3748',
                         },
                     },
                 },
@@ -274,13 +274,60 @@ tailwind_setting = [
         window.matchMedia('(prefers-color-scheme: dark)').addListener(updateTheme);
     """),
     Style("""
-        :root {
-            --background-light: #ffffff;
-            --background-dark: #1a202c;
-            --content-light: #f7fafc;
-            --content-dark: #2d3748;
+        body {
+            transition: background-color 0.3s ease;
+        }
+        .dark body {
+            background-color: #1a202c;
+            color: #e2e8f0;
         }
     """),
+    # Script("""
+    #     tailwind.config = {
+    #         darkMode: 'class',
+    #         theme: {
+    #             extend: {
+    #                 colors: {
+    #                     primary: {
+    #                         light: '#3B82F6',
+    #                         dark: '#60A5FA',
+    #                     },
+    #                     background: {
+    #                         light: 'var(--background-light)',
+    #                         dark: 'var(--background-dark)',
+    #                     },
+    #                     content: {
+    #                         light: 'var(--content-light)',
+    #                         dark: 'var(--content-dark)',
+    #                     },
+    #                 },
+    #             },
+    #         },
+    #     }
+
+    #     // 监听系统主题变化
+    #     function updateTheme() {
+    #         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    #             document.documentElement.classList.add('dark');
+    #         } else {
+    #             document.documentElement.classList.remove('dark');
+    #         }
+    #     }
+
+    #     // 初始化主题
+    #     updateTheme();
+
+    #     // 监听系统主题变化
+    #     window.matchMedia('(prefers-color-scheme: dark)').addListener(updateTheme);
+    # """),
+    # Style("""
+    #     :root {
+    #         --background-light: #ffffff;
+    #         --background-dark: #1a202c;
+    #         --content-light: #f7fafc;
+    #         --content-dark: #2d3748;
+    #     }
+    # """),
 ]
 
 def xue_initialize(katex=False, prism_code_highlight=False, prism_copy_to_clipboard=False, tailwind=False):

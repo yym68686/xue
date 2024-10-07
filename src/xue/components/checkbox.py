@@ -18,8 +18,8 @@ Head.add_default_children([
             transition: all 0.2s ease-in-out;
         }
         .checkbox-input:checked {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
+            background-color: #000;
+            border-color: #000;
         }
         .checkbox-input:checked::after {
             content: '✓';
@@ -29,6 +29,10 @@ Head.add_default_children([
             color: #fff;
             font-size: 0.75rem;
             font-weight: bold;
+        }
+        .checkbox-input:focus {
+            outline: 2px solid #000;
+            outline-offset: 2px;
         }
         .checkbox-input:disabled {
             opacity: 0.5;
@@ -42,6 +46,25 @@ Head.add_default_children([
         .checkbox-label:disabled {
             opacity: 0.7;
             cursor: not-allowed;
+        }
+        @media (prefers-color-scheme: dark) {
+            .checkbox-input {
+                border-color: #4b5563;
+                background-color: #1f2937;
+            }
+            .checkbox-input:checked {
+                background-color: #fff;
+                border-color: #fff;
+            }
+            .checkbox-input:checked::after {
+                color: #000;
+            }
+            .checkbox-input:focus {
+                outline-color: #fff;
+            }
+            .checkbox-label {
+                color: #e5e7eb;
+            }
         }
     """, id="checkbox-style"),
     Script("""
@@ -57,7 +80,6 @@ Head.add_default_children([
 ])
 
 def checkbox(id, label, checked=False, disabled=False, **kwargs):
-
     input_attrs = {
         "type": "checkbox",
         "id": id,

@@ -1,5 +1,44 @@
-from ..core import Div, Label, Span, P, Form as CoreForm, Script, Head
+from ..core import Div, Label, Span, P, Form as CoreForm, Script, Head, Style
 from .input import input
+
+Head.add_default_children([
+    Style("""
+        .form-field {
+            margin-bottom: 1rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #111827;
+            transition: color 0.2s ease-in-out;
+        }
+        .form-description {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+            transition: color 0.2s ease-in-out;
+        }
+        .form-error {
+            font-size: 0.875rem;
+            color: #ef4444;
+            margin-top: 0.5rem;
+            transition: color 0.2s ease-in-out;
+        }
+        @media (prefers-color-scheme: dark) {
+            .form-label {
+                color: #f3f4f6;
+            }
+            .form-description {
+                color: #9ca3af;
+            }
+            .form-error {
+                color: #f87171;
+            }
+        }
+    """, id="form-style")
+])
 
 def Form(*children, **kwargs):
     return CoreForm(*children, **kwargs)
@@ -7,18 +46,14 @@ def Form(*children, **kwargs):
 def FormField(label, name, type="text", placeholder="", description=None, **kwargs):
     field_id = f"{name}-field"
     return Div(
-        Label(label, for_=field_id, class_="block text-sm font-medium text-gray-700"),
+        Label(label, for_=field_id, class_="form-label"),
         input(type=type, id=field_id, name=name, placeholder=placeholder, **kwargs),
-        P(description, class_="mt-2 text-sm text-gray-500") if description else None,
-        Span(id=f"{name}-error", class_="text-sm text-red-500 hidden"),
-        class_="mb-4"
+        P(description, class_="form-description") if description else None,
+        Span(id=f"{name}-error", class_="form-error hidden"),
+        class_="form-field"
     )
 
-# def FormButton(text, **kwargs):
-#     return input(type="submit", value=text, class_="px-6 py-3 flex items-center justify-center text-lg w-full md:w-auto lg:w-48 h-12 bg-blue-500 text-white rounded hover:bg-blue-600", **kwargs)
-#     # return input(type="submit", value=text, class_="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600", **kwargs)
-
-# 添加表单验证脚本
+# 保留原有的表单验证脚本
 Head.add_default_children([
     Script("""
         function validateForm(event) {

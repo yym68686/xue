@@ -8,9 +8,9 @@ Head.add_default_children([
         .model-config-row {
             display: flex;
             align-items: center;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            transition: all 0.3s ease;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease;
         }
         .model-config-row:hover {
             background-color: rgba(0, 0, 0, 0.05);
@@ -87,8 +87,8 @@ def model_config_row(id, model_name="", enabled=False, **kwargs):
             class_="text-area"
         ),
         Div(
-            button("Rename", class_="bg-blue-500 text-white", onclick=f"toggleRenameInput('{id}')"),
-            button("Delete", class_="bg-red-500 text-white", onclick=f"deleteRow('{id}')"),
+            button("Rename", variant="secondary", onclick=f"toggleRenameInput('{id}')"),
+            button("Delete", variant="secondary", onclick=f"deleteRow('{id}')"),
             class_="buttons"
         ),
         id=id,

@@ -102,11 +102,14 @@ def print_file_content(directory, exclude_files, ignore_patterns=None):
         file_path = os.path.join(directory, file)
         if file_path not in exclude_files:
             content = read_file_content(file_path)
+            file_path = file_path.replace("/Users/yanyuming/Downloads/GitHub/", "")
             # print(f"Content:")
             if content is None or content.strip() == "":
                 file_content_context.append(f"{file_path}: This file is empty.")
                 # print(f"This file is empty.")
+                print(f"{file_path}")
             else:
+                print(f"{file_path}")
                 file_content_context.append(f"{file_path}:")
                 for line in content.splitlines():
                     file_content_context.append(f"{line}")
@@ -114,27 +117,6 @@ def print_file_content(directory, exclude_files, ignore_patterns=None):
             file_content_context.append(f"\n")  # 在文件内容之后添加一个空行
 
     return file_content_context
-
-# def print_file_content(directory, exclude_files, ignore_patterns=None):
-#     file_content_context = []
-#     folders, files = get_folders_and_files(directory, ignore_patterns)
-#     # 读取并打印文件内容
-#     for file in files:
-#         file_path = os.path.join(directory, file)
-#         if file_path not in exclude_files:
-#             content = read_file_content(file_path)
-#             # print(f"Content:")
-#             if content is None or content.strip() == "":
-#                 file_content_context.append(f"{file}: This file is empty.")
-#                 # print(f"This file is empty.")
-#             else:
-#                 file_content_context.append(f"{file}:")
-#                 for line in content.splitlines():
-#                     file_content_context.append(f"{line}")
-#                     # print(f"{line}")
-#             file_content_context.append(f"\n")  # 在文件内容之后添加一个空行
-#             # print()  # 在文件内容之后添加一个空行
-#     return file_content_context
 
 context = []
 exclude_files = [
@@ -181,13 +163,19 @@ test/components 是我为 xue 组件编写的测试文件，其中包含了一�
 回答我的问题的时候，不要使用纯 html 代码，而是使用 xue 组件库中的组件代码。要返回 html，请使用 xue 框架的 render() 方法。
 
 如果需要写新的组件，尽量复用已经写好的组件代码，目前已经写好的组件代码在 src/xue/components 中。目前已经写好的组件有：button，checkbox，dropdown，form，input，select。
-所有新组件必须符合 shadcn/ui 的风格：包括丝滑的动态效果，优雅简洁美观的界面，平滑的动画效果和响应式交互等。
-所有新组件代码引入js和css文件的时候，必须在core.py文件中添加标志变量，以便记录是否已经引入过该js和css脚本，避免重复引入。
+
+所有组件必须符合 shadcn/ui 的风格：
+
+1. 丝滑的动态效果
+2. 优雅简洁美观的界面
+3. 平滑的动画效果和响应式交互。
+4. 不引入过多的颜色，例如:
+    - shadcn/ui 的按钮要么是黑底白字，要么是白底黑字，鼠标悬浮时黑底白字会变灰色，白底黑字会变深灰色。
 '''
 
 final_context = [prompt, file_context]
 
-print("\n".join(final_context))
+# print("\n".join(final_context))
 
 # 保存到文件
 with open("xue_context.txt", "w") as file:

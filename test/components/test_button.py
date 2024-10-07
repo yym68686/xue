@@ -15,7 +15,7 @@ async def root():
         Head(),
         Body(
             Div(
-                button.render("Click me", hx_get="/button-clicked", hx_target="#button-result"),
+                button.button("Click me", hx_get="/button-clicked", hx_target="#button-result"),
                 Div(id="button-result"),
             )
         )

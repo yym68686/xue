@@ -49,11 +49,15 @@ class Head(HTMLTag):
 
     @classmethod
     def set_default_children(cls, new_default_children):
-        cls.default_children = new_default_children
+        cls.default_children += new_default_children
 
     @classmethod
     def add_default_children(cls, children):
-        cls.default_children.extend(children)
+        for child in children:
+            if hasattr(child, 'attributes') and 'id' in child.attributes:
+                # 如果已经存在相同 id 的元素，则替换它
+                cls.default_children = [c for c in cls.default_children if not (hasattr(c, 'attributes') and 'id' in c.attributes and c.attributes['id'] == child.attributes['id'])]
+            cls.default_children.append(child)
 
     def __init__(self, *children, **attributes):
         all_children = self.default_children + list(children)
@@ -89,6 +93,7 @@ class Ol(HTMLTag):
 class Li(HTMLTag): pass
 class Div(HTMLTag): pass
 class Span(HTMLTag): pass
+class Strong(HTMLTag): pass
 class P(HTMLTag): pass
 class Pre(HTMLTag): pass
 class Br(HTMLTag):
@@ -294,7 +299,3 @@ def xue_initialize(katex=False, prism_code_highlight=False, prism_copy_to_clipbo
         init_setting += prism_copy_to_clipboard_setting
 
     Head.set_default_children(init_setting)
-
-DROPDOWN_SCRIPT_ADDED = False
-DROPDOWN_MENU_SCRIPT_ADDED = False
-SELECT_SCRIPT_ADDED = False

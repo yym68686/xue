@@ -1,4 +1,4 @@
-from ..core import Div, Button, A, Ul, Li, Span, DROPDOWN_SCRIPT_ADDED, DROPDOWN_MENU_SCRIPT_ADDED, Head, Image, Raw, LazyIcon, Script, Style
+from ..core import Div, Button, A, Ul, Li, Span, Head, Image, Raw, LazyIcon, Script, Style
 def render(text, **kwargs):
     button_attributes = {
        "class_": "px-4 py-2 bg-gray-200 rounded",
@@ -20,95 +20,92 @@ def render(text, **kwargs):
         class_="relative"
     )
 
+Head.add_default_children([
+    # 点击其他地方关闭下拉菜单
+    Script("""
+        document.addEventListener('click', function(event) {
+            var dropdowns = document.querySelectorAll('[id$="-content"]');
+            var triggers = document.querySelectorAll('[id$="-trigger"]');
+
+            dropdowns.forEach(function(dropdown) {
+                if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
+                    dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+                    dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                }
+            });
+
+            if (event.target.closest('[id$="-trigger"]')) {
+                var triggerId = event.target.closest('[id$="-trigger"]').id;
+                var dropdownId = triggerId.replace('-trigger', '-content');
+                var dropdown = document.getElementById(dropdownId);
+
+                if (dropdown.classList.contains('opacity-0')) {
+                    dropdown.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                    dropdown.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+                } else {
+                    dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+                    dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                }
+            }
+        });
+
+        htmx.on('htmx:afterSwap', function(event) {
+            if (event.detail.target.id.endsWith('-content')) {
+                setTimeout(function() {
+                    event.detail.target.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                    event.detail.target.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+                }, 0);
+            }
+        });
+    """, id="dropdown-menu-script"),
+    # 加载懒加载的图标
+    Script("""
+        function loadSVGContent() {
+            console.log('loadSVGContent called');
+            document.querySelectorAll('.icon-container').forEach(container => {
+                const img = container.querySelector('img.lazy-icon');
+                const svg = container.querySelector('svg');
+                if (img && svg) {
+                    console.log('Processing image:', img.src);
+                    fetch(img.src)
+                        .then(response => response.text())
+                        .then(svgContent => {
+                            console.log('SVG content loaded for:', img.src);
+                            const parser = new DOMParser();
+                            const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+                            const newSvg = svgDoc.querySelector('svg');
+                            if (newSvg) {
+                                newSvg.classList = svg.classList;
+                                newSvg.removeAttribute('width');
+                                newSvg.removeAttribute('height');
+                                svg.parentNode.replaceChild(newSvg, svg);
+                                img.style.display = 'none';
+                            }
+                        })
+                        .catch(error => console.error('Error loading SVG:', error));
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSVGContent);
+        document.body.addEventListener('htmx:afterSettle', loadSVGContent);
+    """, id="load-svg-script"),
+    # 在 htmx:afterSettle 事件后调用 loadSVGContent
+    Script("""
+        htmx.on('htmx:afterSettle', function(event) {
+            loadSVGContent();
+        });
+    """, id="load-svg-script-htmx"),
+    # 添加样式
+    Style("""
+        .icon-container svg {
+            display: inline-block;
+            vertical-align: middle;
+        }
+    """, id="icon-container-style"),
+])
+
 def dropdown_menu(label):
-    global DROPDOWN_MENU_SCRIPT_ADDED
-    if not DROPDOWN_MENU_SCRIPT_ADDED:
-        Head.add_default_children([
-            # 点击其他地方关闭下拉菜单
-            Script("""
-                document.addEventListener('click', function(event) {
-                    var dropdowns = document.querySelectorAll('[id$="-content"]');
-                    var triggers = document.querySelectorAll('[id$="-trigger"]');
-
-                    dropdowns.forEach(function(dropdown) {
-                        if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
-                            dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
-                            dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-                        }
-                    });
-
-                    if (event.target.closest('[id$="-trigger"]')) {
-                        var triggerId = event.target.closest('[id$="-trigger"]').id;
-                        var dropdownId = triggerId.replace('-trigger', '-content');
-                        var dropdown = document.getElementById(dropdownId);
-
-                        if (dropdown.classList.contains('opacity-0')) {
-                            dropdown.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                            dropdown.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
-                        } else {
-                            dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
-                            dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-                        }
-                    }
-                });
-
-                htmx.on('htmx:afterSwap', function(event) {
-                    if (event.detail.target.id.endsWith('-content')) {
-                        setTimeout(function() {
-                            event.detail.target.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                            event.detail.target.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
-                        }, 0);
-                    }
-                });
-            """),
-            # 加载懒加载的图标
-            Script("""
-                function loadSVGContent() {
-                    console.log('loadSVGContent called');
-                    document.querySelectorAll('.icon-container').forEach(container => {
-                        const img = container.querySelector('img.lazy-icon');
-                        const svg = container.querySelector('svg');
-                        if (img && svg) {
-                            console.log('Processing image:', img.src);
-                            fetch(img.src)
-                                .then(response => response.text())
-                                .then(svgContent => {
-                                    console.log('SVG content loaded for:', img.src);
-                                    const parser = new DOMParser();
-                                    const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
-                                    const newSvg = svgDoc.querySelector('svg');
-                                    if (newSvg) {
-                                        newSvg.classList = svg.classList;
-                                        newSvg.removeAttribute('width');
-                                        newSvg.removeAttribute('height');
-                                        svg.parentNode.replaceChild(newSvg, svg);
-                                        img.style.display = 'none';
-                                    }
-                                })
-                                .catch(error => console.error('Error loading SVG:', error));
-                        }
-                    });
-                }
-
-                document.addEventListener('DOMContentLoaded', loadSVGContent);
-                document.body.addEventListener('htmx:afterSettle', loadSVGContent);
-            """),
-            # 在 htmx:afterSettle 事件后调用 loadSVGContent
-            Script("""
-                htmx.on('htmx:afterSettle', function(event) {
-                    loadSVGContent();
-                });
-            """),
-            # 添加样式
-            Style("""
-                .icon-container svg {
-                    display: inline-block;
-                    vertical-align: middle;
-                }
-            """),
-        ])
-
-        DROPDOWN_MENU_SCRIPT_ADDED = True
     menu_id = f"dropdown-menu-{label.lower().replace(' ', '-')}"
     return Div(
         Button(
@@ -159,22 +156,20 @@ def dropdown_menu_content(menu_id, items):
 
     return Ul(*menu_items, class_="py-1")
 
-def dropdown(label, id):
-    global DROPDOWN_SCRIPT_ADDED
-    if not DROPDOWN_SCRIPT_ADDED:
-        Head.add_script("""
-            document.body.addEventListener('click', function(event) {
-                var dropdowns = document.querySelectorAll('[id$="-content"]');
-                dropdowns.forEach(function(dropdown) {
-                    if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
-                        dropdown.classList.remove('opacity-100', 'scale-100');
-                        dropdown.classList.add('opacity-0', 'scale-95');
-                    }
-                });
-            });
-        """)
-        DROPDOWN_SCRIPT_ADDED = True
 
+Head.add_default_children([Script("""
+    document.body.addEventListener('click', function(event) {
+        var dropdowns = document.querySelectorAll('[id$="-content"]');
+        dropdowns.forEach(function(dropdown) {
+            if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
+                dropdown.classList.remove('opacity-100', 'scale-100');
+                dropdown.classList.add('opacity-0', 'scale-95');
+            }
+        });
+    });
+""", id="dropdown-script")])
+
+def dropdown(label, id):
     return Div(
         Button(
             Span(label),

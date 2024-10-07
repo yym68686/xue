@@ -12,8 +12,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/", response_class=HTMLResponse)
 async def root():
     result = HTML(
-        Head(
-        ),
+        Head(),
         Body(
             Div(
                 button.render("Click me", hx_get="/button-clicked", hx_target="#button-result"),
@@ -47,7 +46,7 @@ async def get_dropdown_content(id: str):
             content.classList.toggle('hidden');
         """, hx_swap_oob=True, hx_target=f"#{id}-content")
     ).render()
-    
+
     return HTMLResponse(content)
 
 def dropdown_example():

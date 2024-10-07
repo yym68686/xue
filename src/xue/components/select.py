@@ -1,43 +1,40 @@
-from ..core import Div, Button, Ul, Li, Span, SELECT_SCRIPT_ADDED, Head, Script, Style
+from ..core import Div, Button, Ul, Li, Span, Head, Script, Style
+
+Head.add_default_children([
+    Script("""
+        document.addEventListener('click', function(event) {
+            var selects = document.querySelectorAll('[id$="-content"]');
+            selects.forEach(function(select) {
+                if (!select.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
+                    select.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+                    select.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                }
+            });
+        });
+
+        htmx.on('htmx:afterSwap', function(event) {
+            if (event.detail.target.id.endsWith('-content')) {
+                setTimeout(function() {
+                    event.detail.target.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                    event.detail.target.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+                }, 0);
+            }
+        });
+
+        function updateSelectValue(selectId, value, label) {
+            var trigger = document.getElementById(selectId + '-trigger');
+            trigger.querySelector('.select-value').textContent = label;
+            trigger.setAttribute('data-value', value);
+        }
+    """, id="select-script"),
+    Style("""
+        .select-content {
+            transition: all 0.2s ease-in-out;
+        }
+    """, id="select-style")
+])
 
 def select(placeholder, options, id):
-    global SELECT_SCRIPT_ADDED
-    if not SELECT_SCRIPT_ADDED:
-        Head.add_default_children([
-            Script("""
-                document.addEventListener('click', function(event) {
-                    var selects = document.querySelectorAll('[id$="-content"]');
-                    selects.forEach(function(select) {
-                        if (!select.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
-                            select.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
-                            select.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-                        }
-                    });
-                });
-
-                htmx.on('htmx:afterSwap', function(event) {
-                    if (event.detail.target.id.endsWith('-content')) {
-                        setTimeout(function() {
-                            event.detail.target.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                            event.detail.target.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
-                        }, 0);
-                    }
-                });
-
-                function updateSelectValue(selectId, value, label) {
-                    var trigger = document.getElementById(selectId + '-trigger');
-                    trigger.querySelector('.select-value').textContent = label;
-                    trigger.setAttribute('data-value', value);
-                }
-            """),
-            Style("""
-                .select-content {
-                    transition: all 0.2s ease-in-out;
-                }
-            """)
-        ])
-        SELECT_SCRIPT_ADDED = True
-
     return Div(
         Button(
             Span(placeholder, class_="select-value"),

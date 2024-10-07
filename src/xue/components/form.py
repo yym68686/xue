@@ -14,8 +14,9 @@ def FormField(label, name, type="text", placeholder="", description=None, **kwar
         class_="mb-4"
     )
 
-def FormButton(text, **kwargs):
-    return input(type="submit", value=text, class_="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600", **kwargs)
+# def FormButton(text, **kwargs):
+#     return input(type="submit", value=text, class_="px-6 py-3 flex items-center justify-center text-lg w-full md:w-auto lg:w-48 h-12 bg-blue-500 text-white rounded hover:bg-blue-600", **kwargs)
+#     # return input(type="submit", value=text, class_="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600", **kwargs)
 
 # 添加表单验证脚本
 Head.add_default_children([
@@ -56,5 +57,5 @@ Head.add_default_children([
                 form.addEventListener('submit', validateForm);
             });
         });
-    """)
+    """, id="form-validation-script")
 ])

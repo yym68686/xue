@@ -122,6 +122,13 @@ class LazyIcon(HTMLTag):
             class_="inline-block icon-container",
         ).render(indent)
 
+class Table(HTMLTag): pass
+class Thead(HTMLTag): pass
+class Tbody(HTMLTag): pass
+class Tr(HTMLTag): pass
+class Th(HTMLTag): pass
+class Td(HTMLTag): pass
+
 prism_copy_to_clipboard_setting = [
     Script(src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"),
     Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.css"),

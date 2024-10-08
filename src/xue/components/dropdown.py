@@ -21,6 +21,47 @@ def render(text, **kwargs):
     )
 
 Head.add_default_children([
+    Style("""
+        .dropdown-menu,
+        .dropdown-trigger {
+            border: 1px solid #e5e7eb;
+        }
+        .dropdown-menu {
+            background-color: white;
+            color: #374151;
+            position: absolute;
+            z-index: 1000;
+            min-width: 200px;
+        }
+        .dropdown-item {
+            color: #374151;
+        }
+        .dropdown-item:hover {
+            background-color: #f3f4f6;
+        }
+        .dropdown-separator {
+            background-color: #e5e7eb;
+        }
+        @media (prefers-color-scheme: dark) {
+            .dropdown-menu,
+            .dropdown-trigger {
+                border-color: #4b5563;
+            }
+            .dropdown-menu {
+                background-color: #1f2937;
+                color: #e5e7eb;
+            }
+            .dropdown-item {
+                color: #e5e7eb;
+            }
+            .dropdown-item:hover {
+                background-color: #374151;
+            }
+            .dropdown-separator {
+                background-color: #4b5563;
+            }
+        }
+    """, id="dropdown-style"),
     # 点击其他地方关闭下拉菜单
     Script("""
         document.addEventListener('click', function(event) {
@@ -105,13 +146,13 @@ Head.add_default_children([
     """, id="icon-container-style"),
 ])
 
-def dropdown_menu(label):
+def dropdown_menu(label, **kwargs):
     menu_id = f"dropdown-menu-{label.lower().replace(' ', '-')}"
     return Div(
         Button(
             label,
             id=f"{menu_id}-trigger",
-            class_="px-4 py-2 bg-white border rounded-md shadow-sm hover:bg-gray-50 focus:outline-none",
+            class_="px-4 py-2 bg-white dark:bg-gray-800 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none dropdown-trigger",
             hx_get=f"/dropdown-menu/{menu_id}",
             hx_target=f"#{menu_id}-content",
             hx_swap="innerHTML",
@@ -119,7 +160,7 @@ def dropdown_menu(label):
         ),
         Div(
             id=f"{menu_id}-content",
-            class_="absolute mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-300 ease-in-out opacity-0 scale-95 pointer-events-none",
+            class_="absolute mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none dropdown-menu transition-all duration-300 ease-in-out opacity-0 scale-95 pointer-events-none",
         ),
         class_="relative inline-block text-left"
     )
@@ -131,7 +172,7 @@ def dropdown_menu_content(menu_id, items):
     menu_items = []
     for item in items:
         if item == "separator":
-            menu_items.append(Li(Div(class_="my-1 h-px bg-gray-200")))
+            menu_items.append(Li(Div(class_="my-1 h-px bg-gray-200 dark:bg-gray-600 dropdown-separator")))
         elif isinstance(item, dict):
             icon = LazyIcon(item['icon'], item['label']) if 'icon' in item else ""
             if item.get('disabled'):
@@ -139,8 +180,8 @@ def dropdown_menu_content(menu_id, items):
                     Div(
                         icon,
                         Span(item['label'], class_="opacity-50"),
-                        Span(item.get('shortcut', ''), class_="ml-auto text-xs text-gray-400 opacity-50"),
-                        class_="flex items-center px-4 py-2 text-sm text-gray-500 cursor-not-allowed"
+                        Span(item.get('shortcut', ''), class_="ml-auto text-xs text-gray-400 dark:text-gray-500 opacity-50"),
+                        class_="flex items-center px-4 py-2 text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed dropdown-item"
                     )
                 ))
             else:
@@ -148,14 +189,13 @@ def dropdown_menu_content(menu_id, items):
                     A(
                         icon,
                         Span(item['label']),
-                        Span(item.get('shortcut', ''), class_="ml-auto text-xs text-gray-400"),
+                        Span(item.get('shortcut', ''), class_="ml-auto text-xs text-gray-400 dark:text-gray-500"),
                         href=item.get('href', '#'),
-                        class_="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-150 ease-in-out"
+                        class_="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 ease-in-out dropdown-item"
                     )
                 ))
 
     return Ul(*menu_items, class_="py-1")
-
 
 Head.add_default_children([Script("""
     document.body.addEventListener('click', function(event) {

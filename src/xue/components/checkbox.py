@@ -83,8 +83,13 @@ def checkbox(id, label, checked=False, disabled=False, **kwargs):
     input_attrs = {
         "type": "checkbox",
         "id": id,
-        "class_": "checkbox-input",
+        # "class_": "checkbox-input",
     }
+
+    class_ = f"checkbox-input"
+    if "class_" in kwargs:
+        class_ += f" {kwargs.pop('class_')}"
+    input_attrs["class_"] = class_
 
     if checked:
         input_attrs["checked"] = "checked"

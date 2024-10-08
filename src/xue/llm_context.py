@@ -100,6 +100,7 @@ def print_file_content(directory, exclude_files, ignore_patterns=None):
     # 打印文件
     for i, file in enumerate(files):
         file_path = os.path.join(directory, file)
+        # print(f"file_path: {file_path}\nexclude_files: {exclude_files}", file_path in exclude_files)
         if file_path not in exclude_files:
             content = read_file_content(file_path)
             file_path = file_path.replace("/Users/yanyuming/Downloads/GitHub/", "")
@@ -126,6 +127,7 @@ exclude_files = [
     "setup.py",
     # "requirements.txt",
     "README.md",
+    "README_CN.md",
     "LICENSE",
     ".gitignore",
     "xue_context.txt",

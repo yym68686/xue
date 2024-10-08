@@ -1,18 +1,18 @@
 # Xue
 
-[English](README.md) | [Chinese](README_CN.md)
+[英文](README.md) | [中文](README_CN.md)
 
-Xue (show, [ˈʃəʊ]) is a minimalist front-end web framework for quickly building simple web applications. This project is inspired by [FastHTML](https://github.com/AnswerDotAI/fasthtml). FastHTML is very useful, but when I was building my blog application, I found that I couldn't solve some bugs related to markdown rendering. Therefore, I decided to write a minimalist web framework myself. I don't like using other people's frameworks because if I encounter problems, I won't know how to solve them. If you, like me, use Python as your development language, I think Xue is suitable for you to quickly develop web applications.
+Xue（show，[ˈʃəʊ]）是一个极简主义前端 web 框架，用于快速构建简单的 web 应用程序。本项目灵感来源于 [FastHTML](https://github.com/AnswerDotAI/fasthtml). FastHTML 非常好用，但是在我构建我的 blog 程序的时候，我发现我无法解决 markdown 渲染问题的一些 bug。因此，我决定自己写一个极简主义的 web 框架。我不喜欢使用别人的框架，因为如果我遇到了问题，我将不知道如何解决。如果你跟我一样使用 python 作为开发语言，我想 xue 比较适合你快速开发 web 应用。
 
-## Install
+## 安装
 
 ```bash
 pip install xue
 ```
 
-## Use
+## 使用
 
-You can use xue to build a simple todo list web application with only 50 lines of code, as follows:
+你可以使用 xue 仅使用 50 行代码构建一个简单的 todo list web 应用程序，如下所示:
 
 ```python
 import uuid
@@ -23,7 +23,7 @@ from fastapi import FastAPI, Form as fastapiForm, HTTPException
 
 app = FastAPI()
 
-# Simulated database
+# 模拟数据库
 todos = []
 
 class Todo(BaseModel):
@@ -74,42 +74,42 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
 
-## Component
+## 组件
 
-Xue provides some simple components that you can use to build your web applications.
+Xue 提供了一些简单的组件，你可以使用这些组件构建你的 web 应用程序。
 
-The components currently written are: button, checkbox, dropdown, form, input, select. Styling is done using tailwindcss. It mimics the shadcn/ui component library, including smooth dynamic effects, elegant, simple, and aesthetically pleasing interfaces, smooth animations, and responsive interactions.
+目前已经写好的组件有：button，checkbox，dropdown，form，input，select。采用 tailwindcss 进行样式设计。模仿 shadcn/ui 组件库，包括丝滑的动态效果，优雅简洁美观的界面，平滑的动画效果和响应式交互。
 
-## LLM friendly
+## LLM 友好
 
-Since this is a new framework, if asked, the current LLM will not provide effective suggestions, so I have written a script to automatically generate LLM-friendly documentation. You can use the following command to generate LLM-friendly documentation:
+由于这是一个新的框架，如果问目前的 LLM 不会提供有效的建议，所以我写了一个自动生成 LLM 友好的文档的脚本。你可以使用以下命令生成 LLM 友好的文档:
 
 ```bash
 python llm_context.py
 ```
 
-The script will automatically save the document in the `llm_context.txt` file. You can directly copy it to LLM for effective advice.
+改脚本会自动把文档保存在 `llm_context.txt` 文件中。直接复制给 LLM 提问即可得到有效的建议。
 
 ## Tailwind CSS
 
-The JIT (Just-In-Time) mode of Tailwind CSS, here are the implementation steps:
+Tailwind CSS 的 JIT (Just-In-Time) 模式，以下是实现步骤:
 
-1. Install necessary dependencies:
+1. 安装必要的依赖:
 
 ```bash
 npm init -y
 npm install tailwindcss@latest postcss@latest autoprefixer@latest
 ```
 
-2. Create Tailwind CSS configuration file:
+2. 创建 Tailwind CSS 配置文件:
 
 ```bash
 npx tailwindcss init -p
 ```
 
-This will create the `tailwind.config.js` and `postcss.config.js` files.
+这将创建 `tailwind.config.js` 和 `postcss.config.js` 文件。
 
-3. Modify `tailwind.config.js`:
+3. 修改 `tailwind.config.js`:
 
 ```javascript
 module.exports = {
@@ -117,7 +117,7 @@ module.exports = {
   purge: [
     './templates/**/*.html',
     './static/**/*.js',
-    './your_python_file.py',  // File containing your Python code
+    './your_python_file.py',  // 包含你的 Python 代码的文件
   ],
   darkMode: false,
   theme: {
@@ -130,7 +130,7 @@ module.exports = {
 }
 ```
 
-4. Create an `input.css` file:
+4. 创建一个 `input.css` 文件:
 
 ```css
 @tailwind base;
@@ -138,7 +138,7 @@ module.exports = {
 @tailwind utilities;
 ```
 
-5. Add an npm script to `package.json`:
+5. 添加一个 npm 脚本到 `package.json`:
 
 ```json
 "scripts": {
@@ -146,10 +146,10 @@ module.exports = {
 }
 ```
 
-6. Run build script:
+6. 运行构建脚本:
 
 ```bash
 npm run build-css
 ```
 
-This will start a monitoring process that regenerates the CSS whenever your Python file changes.
+这将启动一个监视进程，每当你的 Python 文件发生变化时，它都会重新生成 CSS。

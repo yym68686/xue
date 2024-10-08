@@ -139,6 +139,7 @@ exclude_files = [
 exclude_dirs = [
     ".git",
     ".github",
+    "uni-api",
     "__pycache__",
     "example",
 ]

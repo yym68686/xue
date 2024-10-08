@@ -156,12 +156,12 @@ def data_table(columns, data, id):
                         Th(checkbox("select-all", "", onclick="toggleAllRows(this.checked)")),
                         *[Th(
                             Div(
-                                col['header'],
+                                col['label'],
                                 Span("▼", class_="sort-icon"),
                                 class_="sortable-header" if col.get('sortable', False) else "",
-                                onclick=f"sortTable({i}, '{col['accessor']}')" if col.get('sortable', False) else None
+                                onclick=f"sortTable({i}, '{col['value']}')" if col.get('sortable', False) else None
                             ),
-                            data_accessor=col['accessor']
+                            data_accessor=col['value']
                         ) for i, col in enumerate(columns)],
                         Th("Actions")  # 新增的操作列
                     )
@@ -169,8 +169,9 @@ def data_table(columns, data, id):
                 Tbody(
                     *[Tr(
                         Td(checkbox(f"row-{i}", "", class_="row-checkbox")),
-                        *[Td(row[col['accessor']], data_accessor=col['accessor']) for col in columns],
-                        Td(row_actions_menu(i))  # 使用新的 row_actions_menu 函数
+                        *[Td(row[col['value']], data_accessor=col['value']) for col in columns],
+                        Td(row_actions_menu(i)),  # 使用行索引作为 row_id
+                        id=f"row-{i}"
                     ) for i, row in enumerate(data)]
                 ),
                 class_="data-table"
@@ -191,12 +192,12 @@ def data_table(columns, data, id):
 
 def get_column_visibility_menu(id, columns):
     return dropdown_menu_content(id, [
-        {"label": col['header'], "value": col['accessor']}
+        {"label": col['label'], "value": col['value']}
         for col in columns if col.get('can_hide', True)
     ])
 
 def row_actions_menu(row_id):
-    return dropdown_menu("⋮")
+    return dropdown_menu("⋮", hx_get=f"/dropdown-menu/dropdown-menu-⋮/{row_id}")
 
 def get_row_actions_menu(row_id):
     return dropdown_menu_content(f"row-actions-{row_id}", [
@@ -206,3 +207,11 @@ def get_row_actions_menu(row_id):
         "separator",
         {"label": "More...", "icon": "more-horizontal"},
     ])
+
+def render_row(row_data, row_id, columns):
+    return Tr(
+        Td(checkbox(f"row-{row_id}", "", class_="row-checkbox")),
+        *[Td(row_data[col['value']], data_accessor=col['value']) for col in columns],
+        Td(row_actions_menu(row_id)),
+        id=f"row-{row_id}"
+    ).render()

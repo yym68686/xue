@@ -148,12 +148,15 @@ Head.add_default_children([
 
 def dropdown_menu(label, **kwargs):
     menu_id = f"dropdown-menu-{label.lower().replace(' ', '-')}"
+    get_mode = f"/dropdown-menu/{menu_id}"
+    if kwargs.get('hx_get'):
+        get_mode = kwargs['hx_get']
     return Div(
         Button(
             label,
             id=f"{menu_id}-trigger",
             class_="px-4 py-2 bg-white dark:bg-gray-800 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none dropdown-trigger",
-            hx_get=f"/dropdown-menu/{menu_id}",
+            hx_get=get_mode,
             hx_target=f"#{menu_id}-content",
             hx_swap="innerHTML",
             hx_trigger="click",

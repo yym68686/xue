@@ -207,17 +207,41 @@ def dropdown_menu_content(menu_id, items):
 
     return Ul(*menu_items, class_="py-1")
 
-Head.add_default_children([Script("""
-    document.body.addEventListener('click', function(event) {
-        var dropdowns = document.querySelectorAll('[id$="-content"]');
-        dropdowns.forEach(function(dropdown) {
-            if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
-                dropdown.classList.remove('opacity-100', 'scale-100');
-                dropdown.classList.add('opacity-0', 'scale-95');
+Head.add_default_children([
+    Script("""
+        document.addEventListener('click', function(event) {
+            var dropdowns = document.querySelectorAll('[id$="-content"]');
+            dropdowns.forEach(function(dropdown) {
+                if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
+                    closeDropdown(dropdown);
+                }
+            });
+        });
+
+        htmx.on('htmx:afterSwap', function(event) {
+            if (event.detail.target.id.endsWith('-content')) {
+                setTimeout(function() {
+                    event.detail.target.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                    event.detail.target.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+                }, 0);
             }
         });
-    });
-""", id="dropdown-script")])
+
+        function closeDropdown(dropdown) {
+            dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+            dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+        }
+
+        htmx.on('htmx:beforeRequest', function(event) {
+            if (event.detail.elt.closest('.dropdown-item')) {
+                var dropdown = event.detail.elt.closest('[id$="-content"]');
+                if (dropdown) {
+                    closeDropdown(dropdown);
+                }
+            }
+        });
+    """, id="dropdown-script"),
+])
 
 def dropdown(label, id):
     return Div(

@@ -124,19 +124,6 @@ Head.add_default_children([
             }
         });
     """, id="sheet-script")
-    # Script("""
-    #     function toggleSheet(sheetId) {
-    #         const overlay = document.getElementById(sheetId + '-overlay');
-    #         const content = document.getElementById(sheetId + '-content');
-    #         overlay.classList.toggle('open');
-    #         content.classList.toggle('open');
-    #     }
-    #     htmx.on('htmx:afterSwap', function(event) {
-    #         if (event.detail.target.id === 'sheet-container') {
-    #             toggleSheet('edit-sheet');
-    #         }
-    #     });
-    # """, id="sheet-script")
 ])
 
 def Sheet(id, trigger, content, width=None, max_width=None):

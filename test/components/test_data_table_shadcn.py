@@ -35,13 +35,22 @@ async def root():
     return result
 
 @app.get("/dropdown-menu/{menu_id}", response_class=HTMLResponse)
-async def get_columns_menu():
-    columns = [
-        {"header": "ID", "accessor": "id"},
-        {"header": "Name", "accessor": "name"},
-        {"header": "Email", "accessor": "email"},
-        {"header": "Role", "accessor": "role"},
-    ]
+async def get_columns_menu(menu_id: str):
+    if menu_id == "dropdown-menu-⋮":
+        columns = [
+            {"header": "Edit", "accessor": "edit"},
+            {"header": "Duplicate", "accessor": "duplicate"},
+            {"header": "Delete", "accessor": "delete"},
+            # "separator",
+            {"header": "More...", "accessor": "more"},
+        ]
+    else:
+        columns = [
+            {"header": "ID", "accessor": "id"},
+            {"header": "Name", "accessor": "name"},
+            {"header": "Email", "accessor": "email"},
+            {"header": "Role", "accessor": "role"},
+        ]
     print(data_table.get_column_visibility_menu("columns", columns).render())
     return data_table.get_column_visibility_menu("columns", columns).render()
 

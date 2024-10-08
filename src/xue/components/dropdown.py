@@ -185,13 +185,23 @@ def dropdown_menu_content(menu_id, items):
                     )
                 ))
             else:
+                # 创建一个属性字典,包含所有的 HTMX 属性
+                attrs = {
+                    'class_': "flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 ease-in-out dropdown-item",
+                    'href': item.get('href', '#')
+                }
+
+                # 添加所有以 'hx-' 开头的属性
+                for key, value in item.items():
+                    if key.startswith('hx-'):
+                        attrs[key.replace('-', '_')] = value
+
                 menu_items.append(Li(
                     A(
                         icon,
                         Span(item['label']),
                         Span(item.get('shortcut', ''), class_="ml-auto text-xs text-gray-400 dark:text-gray-500"),
-                        href=item.get('href', '#'),
-                        class_="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 ease-in-out dropdown-item"
+                        **attrs
                     )
                 ))
 

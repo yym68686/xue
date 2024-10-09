@@ -69,7 +69,7 @@ Head.add_default_children([
     """, id="model_config_row-script")
 ])
 
-def model_config_row(id, model_name="", enabled=False, **kwargs):
+def model_config_row(id, model_name="", rename_model_name="", enabled=False, **kwargs):
     attributes = {
         "class_": "model-config-row" + " " + kwargs.get("class_", "")
     }
@@ -79,11 +79,13 @@ def model_config_row(id, model_name="", enabled=False, **kwargs):
     # 添加所有额外的属性，包括 hx-get 和 hx-target
     attributes.update(kwargs)
 
+    rename_input_class = "rename-input active" if rename_model_name else "rename-input"
+
     return Div(
-        checkbox(f"{id}-checkbox", "", checked=enabled),
+        checkbox(f"{id}-checkbox", "", checked=enabled, name=f"model_enabled_{id}"),
         Div(
-            input(type="text", placeholder="Model name", value=model_name),
-            input(type="text", placeholder="New name", class_="rename-input"),
+            input(type="text", placeholder="Model name", value=model_name, name=f"model_name_{id}"),
+            input(type="text", placeholder="New name", class_=rename_input_class, value=rename_model_name, name=f"model_rename_{id}"),
             class_="text-area"
         ),
         Div(

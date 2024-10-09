@@ -178,6 +178,7 @@ test/components 是我为 xue 组件编写的测试文件，其中包含了一�
 
 final_context = [prompt, file_context]
 
+print(len(file_context.split("\n")))
 # print("\n".join(final_context))
 
 # 保存到文件

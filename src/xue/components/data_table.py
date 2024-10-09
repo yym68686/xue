@@ -142,52 +142,54 @@ Head.add_default_children([
     """, id="data-table-script")
 ])
 
-def data_table(columns, data, id):
+def data_table(columns, data, id, with_filter=True):
     return Div(
         Div(
             input(type="text", placeholder="Filter...", id=f"{id}-filter", class_="mr-2"),
             dropdown_menu("Columns"),
             class_="table-header"
-        ),
+        ) if with_filter else None,
         Div(
-            Table(
-                Thead(
-                    Tr(
-                        Th(checkbox("select-all", "", onclick="toggleAllRows(this.checked)")),
-                        *[Th(
-                            Div(
-                                col['label'],
-                                Span("▼", class_="sort-icon"),
-                                class_="sortable-header" if col.get('sortable', False) else "",
-                                onclick=f"sortTable({i}, '{col['value']}')" if col.get('sortable', False) else None
-                            ),
-                            data_accessor=col['value']
-                        ) for i, col in enumerate(columns)],
-                        Th("Actions")  # 新增的操作列
-                    )
-                ),
-                Tbody(
-                    *[Tr(
-                        Td(checkbox(f"row-{i}", "", class_="row-checkbox")),
-                        *[Td(row[col['value']], data_accessor=col['value']) for col in columns],
-                        Td(row_actions_menu(i)),  # 使用行索引作为 row_id
-                        id=f"row-{i}"
-                    ) for i, row in enumerate(data)]
-                ),
-                class_="data-table"
-            ),
-            class_="data-table-container"
-        ),
-        Div(
-            Div(id="selected-count", class_="text-sm text-gray-500"),
             Div(
-                button("Previous", variant="outline", class_="mr-2"),
-                button("Next", variant="outline"),
-                class_="pagination"
+                Table(
+                    Thead(
+                        Tr(
+                            Th(checkbox("select-all", "", onclick="toggleAllRows(this.checked)")),
+                            *[Th(
+                                Div(
+                                    col['label'],
+                                    Span("▼", class_="sort-icon"),
+                                    class_="sortable-header" if col.get('sortable', False) else "",
+                                    onclick=f"sortTable({i}, '{col['value']}')" if col.get('sortable', False) else None
+                                ),
+                                data_accessor=col['value']
+                            ) for i, col in enumerate(columns)],
+                            Th("Actions")  # 新增的操作列
+                        )
+                    ),
+                    Tbody(
+                        *[Tr(
+                            Td(checkbox(f"row-{i}", "", class_="row-checkbox")),
+                            *[Td(row[col['value']], data_accessor=col['value']) for col in columns],
+                            Td(row_actions_menu(i)),  # 使用行索引作为 row_id
+                            id=f"row-{i}"
+                        ) for i, row in enumerate(data)]
+                    ),
+                    class_="data-table"
+                ),
+                class_="data-table-container"
             ),
-            class_="table-footer"
+            Div(
+                Div(id="selected-count", class_="text-sm text-gray-500"),
+                Div(
+                    button("Previous", variant="outline", class_="mr-2"),
+                    button("Next", variant="outline"),
+                    class_="pagination"
+                ),
+                class_="table-footer"
+            ),
+            id=id
         ),
-        id=id
     )
 
 def get_column_visibility_menu(id, columns):

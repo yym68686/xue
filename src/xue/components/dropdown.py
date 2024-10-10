@@ -147,7 +147,11 @@ Head.add_default_children([
 ])
 
 def dropdown_menu(label, **kwargs):
-    menu_id = f"dropdown-menu-{label.lower().replace(' ', '-')}"
+    if kwargs.get("id"):
+        value = kwargs.get("id")
+    else:
+        value = label
+    menu_id = f"dropdown-menu-{value.lower().replace(' ', '-')}"
     get_mode = f"/dropdown-menu/{menu_id}"
     if kwargs.get('hx_get'):
         get_mode = kwargs['hx_get']

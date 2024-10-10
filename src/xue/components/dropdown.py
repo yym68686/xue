@@ -70,8 +70,7 @@ Head.add_default_children([
 
             dropdowns.forEach(function(dropdown) {
                 if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
-                    dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
-                    dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                    closeDropdown(dropdown);
                 }
             });
 
@@ -81,24 +80,40 @@ Head.add_default_children([
                 var dropdown = document.getElementById(dropdownId);
 
                 if (dropdown.classList.contains('opacity-0')) {
-                    dropdown.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                    dropdown.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+                    openDropdown(dropdown);
                 } else {
-                    dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
-                    dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                    closeDropdown(dropdown);
                 }
             }
         });
 
+        function openDropdown(dropdown) {
+            dropdown.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+            dropdown.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+        }
+
+        function closeDropdown(dropdown) {
+            dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+            dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+        }
+
         htmx.on('htmx:afterSwap', function(event) {
             if (event.detail.target.id.endsWith('-content')) {
                 setTimeout(function() {
-                    event.detail.target.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                    event.detail.target.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+                    openDropdown(event.detail.target);
                 }, 0);
             }
         });
-    """, id="dropdown-menu-script"),
+
+        htmx.on('htmx:beforeRequest', function(event) {
+            if (event.detail.elt.closest('.dropdown-item')) {
+                var dropdown = event.detail.elt.closest('[id$="-content"]');
+                if (dropdown) {
+                    closeDropdown(dropdown);
+                }
+            }
+        });
+    """, id="dropdown-script"),
     # 加载懒加载的图标
     Script("""
         function loadSVGContent() {
@@ -163,7 +178,7 @@ def dropdown_menu(label, **kwargs):
             hx_get=get_mode,
             hx_target=f"#{menu_id}-content",
             hx_swap="innerHTML",
-            hx_trigger="click",
+            hx_trigger="click once",
         ),
         Div(
             id=f"{menu_id}-content",
@@ -213,42 +228,6 @@ def dropdown_menu_content(menu_id, items):
                 ))
 
     return Ul(*menu_items, class_="py-1")
-
-Head.add_default_children([
-    Script("""
-        document.addEventListener('click', function(event) {
-            var dropdowns = document.querySelectorAll('[id$="-content"]');
-            dropdowns.forEach(function(dropdown) {
-                if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
-                    closeDropdown(dropdown);
-                }
-            });
-        });
-
-        htmx.on('htmx:afterSwap', function(event) {
-            if (event.detail.target.id.endsWith('-content')) {
-                setTimeout(function() {
-                    event.detail.target.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                    event.detail.target.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
-                }, 0);
-            }
-        });
-
-        function closeDropdown(dropdown) {
-            dropdown.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
-            dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-        }
-
-        htmx.on('htmx:beforeRequest', function(event) {
-            if (event.detail.elt.closest('.dropdown-item')) {
-                var dropdown = event.detail.elt.closest('[id$="-content"]');
-                if (dropdown) {
-                    closeDropdown(dropdown);
-                }
-            }
-        });
-    """, id="dropdown-script"),
-])
 
 def dropdown(label, id):
     return Div(

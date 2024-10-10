@@ -31,7 +31,6 @@ Head.add_default_children([
             color: #374151;
             position: absolute;
             z-index: 1000;
-            min-width: 200px;
         }
         .dropdown-item {
             color: #374151;
@@ -187,7 +186,7 @@ def dropdown_menu(label, **kwargs):
         ),
         Div(
             id=f"{menu_id}-content",
-            class_="absolute mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none dropdown-menu transition-all duration-300 ease-in-out opacity-0 scale-95 pointer-events-none",
+            class_="absolute mt-2 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none dropdown-menu transition-all duration-300 ease-in-out opacity-0 scale-95 pointer-events-none",
         ),
         class_="relative inline-block text-left"
     )

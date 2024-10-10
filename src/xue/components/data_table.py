@@ -11,6 +11,7 @@ Head.add_default_children([
             overflow-x: auto;
             border: 1px solid #e2e8f0;
             border-radius: 0.5rem;
+            overflow-x: visible !important;
         }
         .data-table {
             width: 100%;

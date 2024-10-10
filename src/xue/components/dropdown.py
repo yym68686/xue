@@ -196,6 +196,8 @@ def get_lucide_icon_url(icon_name):
 
 def dropdown_menu_content(menu_id, items):
     menu_items = []
+    max_label_length = max(len(item['label']) for item in items if isinstance(item, dict) and 'label' in item)
+    max_shortcut_length = max(len(item.get('shortcut', '')) for item in items if isinstance(item, dict))
     for item in items:
         if item == "separator":
             menu_items.append(Li(Div(class_="my-1 h-px bg-gray-200 dark:bg-gray-600 dropdown-separator")))
@@ -213,20 +215,26 @@ def dropdown_menu_content(menu_id, items):
             else:
                 # 创建一个属性字典,包含所有的 HTMX 属性
                 attrs = {
-                    'class_': "flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 ease-in-out dropdown-item",
+                    'class_': "flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 ease-in-out dropdown-item whitespace-nowrap",
                     'href': item.get('href', '#')
                 }
 
-                # 添加所有以 'hx-' 开头的属性
                 for key, value in item.items():
                     if key.startswith('hx-'):
                         attrs[key.replace('-', '_')] = value
 
+                label = item['label']
+                shortcut = item.get('shortcut', '')
+
                 menu_items.append(Li(
                     A(
                         icon,
-                        Span(item['label']),
-                        Span(item.get('shortcut', ''), class_="ml-auto text-xs text-gray-400 dark:text-gray-500"),
+                        Span(label, class_="flex-grow"),
+                        Span(
+                            Span(class_="invisible", style=f"width: {max_label_length - len(label) + max_shortcut_length - len(shortcut)}ch"),
+                            Span(shortcut, class_="text-xs text-gray-400 dark:text-gray-500"),
+                            class_="flex items-center"
+                        ),
                         **attrs
                     )
                 ))

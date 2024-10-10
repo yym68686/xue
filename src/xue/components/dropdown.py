@@ -64,28 +64,26 @@ Head.add_default_children([
     """, id="dropdown-style"),
     # 点击其他地方关闭下拉菜单
     Script("""
-        document.addEventListener('click', function(event) {
-            var dropdowns = document.querySelectorAll('[id$="-content"]');
-            var triggers = document.querySelectorAll('[id$="-trigger"]');
+        let activeDropdown = null;
 
-            dropdowns.forEach(function(dropdown) {
-                if (!dropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
-                    closeDropdown(dropdown);
-                }
-            });
+        function toggleDropdown(dropdownId, event) {
+            const dropdown = document.getElementById(dropdownId + '-content');
+            const isCurrentlyActive = dropdown.classList.contains('opacity-100');
 
-            if (event.target.closest('[id$="-trigger"]')) {
-                var triggerId = event.target.closest('[id$="-trigger"]').id;
-                var dropdownId = triggerId.replace('-trigger', '-content');
-                var dropdown = document.getElementById(dropdownId);
-
-                if (dropdown.classList.contains('opacity-0')) {
-                    openDropdown(dropdown);
-                } else {
-                    closeDropdown(dropdown);
-                }
+            // 关闭之前打开的下拉菜单
+            if (activeDropdown && activeDropdown !== dropdown) {
+                closeDropdown(activeDropdown);
             }
-        });
+
+            if (isCurrentlyActive) {
+                closeDropdown(dropdown);
+            } else {
+                openDropdown(dropdown);
+            }
+
+            activeDropdown = isCurrentlyActive ? null : dropdown;
+            event.stopPropagation();
+        }
 
         function openDropdown(dropdown) {
             dropdown.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
@@ -97,19 +95,25 @@ Head.add_default_children([
             dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
         }
 
+        document.addEventListener('click', function(event) {
+            if (activeDropdown && !activeDropdown.contains(event.target) && !event.target.closest('[id$="-trigger"]')) {
+                closeDropdown(activeDropdown);
+                activeDropdown = null;
+            }
+        });
+
         htmx.on('htmx:afterSwap', function(event) {
             if (event.detail.target.id.endsWith('-content')) {
-                setTimeout(function() {
-                    openDropdown(event.detail.target);
-                }, 0);
+                openDropdown(event.detail.target);
+                activeDropdown = event.detail.target;
             }
         });
 
         htmx.on('htmx:beforeRequest', function(event) {
             if (event.detail.elt.closest('.dropdown-item')) {
-                var dropdown = event.detail.elt.closest('[id$="-content"]');
-                if (dropdown) {
-                    closeDropdown(dropdown);
+                if (activeDropdown) {
+                    closeDropdown(activeDropdown);
+                    activeDropdown = null;
                 }
             }
         });
@@ -175,6 +179,7 @@ def dropdown_menu(label, **kwargs):
             label,
             id=f"{menu_id}-trigger",
             class_="px-4 py-2 bg-white dark:bg-gray-800 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none dropdown-trigger",
+            onclick=f"toggleDropdown('{menu_id}', event)",  # 修改这里
             hx_get=get_mode,
             hx_target=f"#{menu_id}-content",
             hx_swap="innerHTML",

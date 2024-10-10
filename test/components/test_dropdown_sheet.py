@@ -14,7 +14,8 @@ async def root():
         ),
         Body(
             Div(
-                dropdown.dropdown_menu("Actions"),
+                dropdown.dropdown_menu("Actions1", id="actions-menu-1"),
+                dropdown.dropdown_menu("Actions2", id="actions-menu-2"),
                 Div(id="sheet-container"),  # 这里是 sheet 将被加载的地方
                 class_="container mx-auto p-4"
             )

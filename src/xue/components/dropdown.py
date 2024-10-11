@@ -31,9 +31,12 @@ Head.add_default_children([
             color: #374151;
             position: absolute;
             z-index: 1000;
+            padding: 0.25rem;
         }
         .dropdown-item {
             color: #374151;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s ease;
         }
         .dropdown-item:hover {
             background-color: #f3f4f6;

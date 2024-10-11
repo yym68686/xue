@@ -42,31 +42,9 @@ class EmptyLine(MarkdownEntity):
     def __init__(self, content: str = ""):
         super().__init__(content, 'EmptyLine')
 
-class Paragraph(MarkdownEntity):
+class Text(MarkdownEntity):
     def __init__(self, content: str = ""):
-        super().__init__(content, 'Paragraph')
-
-class OrderList(MarkdownEntity):
-    def __init__(self, content: str = "", index: int = 1):
-        super().__init__(content, 'OrderList')
-        self.index = index
-
-class UnOrderList(MarkdownEntity):
-    def __init__(self, content: str = ""):
-        super().__init__(content, 'UnOrderList')
-
-class DisplayMath(MarkdownEntity):
-    def __init__(self, content: str = ""):
-        super().__init__(content, 'DisplayMath')
-
-class InlineLink(MarkdownEntity):
-    def __init__(self, content: str = "", url: str = ""):
-        super().__init__(content, 'InlineLink')
-        self.url = url
-
-class InlineMath(MarkdownEntity):
-    def __init__(self, content: str = ""):
-        super().__init__(content, 'InlineMath')
+        super().__init__(content, 'Text')
 
 class CompositeEntity(MarkdownEntity):
     def __init__(self, content: str = "", entity_type: str = ""):
@@ -86,7 +64,7 @@ class ListItem(CompositeEntity):
         inline_elements = parse_inline_elements(self.content)
         for elem in inline_elements:
             if isinstance(elem, str):
-                self.add_child(Paragraph(elem))
+                self.add_child(Text(elem))
             else:
                 self.add_child(elem)
 
@@ -101,6 +79,35 @@ class UnorderedListItem(ListItem):
         super().__init__(content, level)
         self.entity_type = 'UnorderedListItem'
 
+class DisplayMath(MarkdownEntity):
+    def __init__(self, content: str = ""):
+        super().__init__(content, 'DisplayMath')
+
+class InlineLink(MarkdownEntity):
+    def __init__(self, content: str = "", url: str = ""):
+        super().__init__(content, 'InlineLink')
+        self.url = url
+
+class InlineMath(MarkdownEntity):
+    def __init__(self, content: str = ""):
+        super().__init__(content, 'InlineMath')
+
+class Paragraph(CompositeEntity):
+    def __init__(self, content: str = ""):
+        super().__init__(content, 'Paragraph')
+        self.parse_content()
+
+    def parse_content(self):
+        inline_elements = parse_inline_elements(self.content)
+        for elem in inline_elements:
+            if isinstance(elem, str):
+                self.add_child(Text(elem))
+            else:
+                self.add_child(elem)
+
+    def __repr__(self):
+        return f'<Paragraph: {repr(self.children)}>'
+
 def parse_inline_elements(text):
     elements = []
     current_text = ""
@@ -109,7 +116,7 @@ def parse_inline_elements(text):
     while i < len(text):
         if text[i:i+2] == '$$':  # Display math
             if current_text:
-                elements.append(current_text)
+                elements.append(Text(current_text))
                 current_text = ""
             end = text.find('$$', i+2)
             if end != -1:
@@ -120,7 +127,7 @@ def parse_inline_elements(text):
                 break
         elif text[i] == '$':  # Inline math
             if current_text:
-                elements.append(current_text)
+                elements.append(Text(current_text))
                 current_text = ""
             end = text.find('$', i+1)
             if end != -1:
@@ -131,7 +138,7 @@ def parse_inline_elements(text):
                 break
         elif text[i] == '[':  # 潜在的链接
             if current_text:
-                elements.append(current_text)
+                elements.append(Text(current_text))
                 current_text = ""
 
             # 查找匹配的右括号
@@ -144,7 +151,7 @@ def parse_inline_elements(text):
                     bracket_count -= 1
                 j += 1
 
-            if j < len(text) and text[j:j+2] == '(':
+            if j < len(text) and text[j] == '(':
                 # 找到了有效的链接格式
                 content_end = j - 1
                 url_start = j + 1
@@ -164,7 +171,7 @@ def parse_inline_elements(text):
             i += 1
 
     if current_text:
-        elements.append(current_text)
+        elements.append(Text(current_text))
 
     return elements
 
@@ -174,11 +181,11 @@ def parse_markdown(lines, delimiter='\n'):
     current_math_block = []
     in_code_block = False
     in_math_block = False
-    language = None
+    language = ""
     # list_stack = []
 
     for line in lines:
-        # print(repr(line))
+        print(repr(line), line.startswith('```'), in_code_block)
         # print('[' in line)
         # print(']' in line )
         # print( '(' in line and ')' in line )
@@ -205,11 +212,11 @@ def parse_markdown(lines, delimiter='\n'):
             title_content = line[level:].strip()
             entities.append(TitleEntity(title_content, level))
         elif line.startswith('```'):
-            if in_code_block and language:
+            if in_code_block:
                 entities.append(CodeBlock('\n'.join(current_code_block), language))
                 current_code_block = []
                 in_code_block = False
-                language = None
+                language = ""
             else:
                 in_code_block = True
                 language = line.lstrip('`').strip()
@@ -257,18 +264,15 @@ def parse_markdown(lines, delimiter='\n'):
                 # list_stack.append((level, list_item))
 
             elif line.strip():
-                # Handle other content (paragraphs, links, etc.)
+                # 处理其他内容(段落、链接等)
                 inline_elements = parse_inline_elements(line)
-                if len(inline_elements) == 1 and isinstance(inline_elements[0], str):
-                    entities.append(Paragraph(line))
-                else:
-                    para = CompositeEntity(line, 'Paragraph')
-                    for elem in inline_elements:
-                        if isinstance(elem, str):
-                            para.add_child(Paragraph(elem))
-                        else:
-                            para.add_child(elem)
-                    entities.append(para)
+                para = Paragraph()
+                for elem in inline_elements:
+                    if isinstance(elem, str):
+                        para.add_child(Text(elem))
+                    else:
+                        para.add_child(elem)
+                entities.append(para)
             else:
                 entities.append(EmptyLine(line))
 
@@ -305,8 +309,10 @@ def convert_entity_to_text(entity, indent='', linemode=False):
         return f"[{entity.content}]({entity.url})"
     elif isinstance(entity, EmptyLine):
         return f"{entity.content}"
-    elif isinstance(entity, Paragraph):
+    elif isinstance(entity, Text):
         return f"{entity.content}"
+    elif isinstance(entity, Paragraph):
+        return convert_entities_to_text(entity.children, inline=True)
     elif isinstance(entity, DisplayMath):
         return f"$$\n{entity.content}\n$$"
     elif isinstance(entity, InlineMath):
@@ -406,6 +412,9 @@ def check_markdown_parse(markdown_file_path, output_file_path="output.md", delim
         # print(parsed_entities)
         for entity in parsed_entities:
             print(entity)
+            if hasattr(entity, 'children'):
+                for child in entity.children:
+                    print("child", child)
 
     # 将解析结果转换为文本
     converted_text = convert_entities_to_text(parsed_entities)
@@ -419,6 +428,8 @@ def check_markdown_parse(markdown_file_path, output_file_path="output.md", delim
     return parsed_entities
 
 def convert_entities_to_xue(entities):
+    for entity in entities:
+        print(entity)
     def process_entity(entity):
         if isinstance(entity, TitleEntity):
             header_tag = globals()[f'H{entity.level}']
@@ -430,14 +441,14 @@ def convert_entities_to_xue(entities):
                 5: "text-lg",
                 6: "text-base"
             }.get(entity.level, "text-base")
-            return header_tag(entity.content, class_=f"font-bold mb-4 text-gray-800 dark:text-gray-200 {size_class}")
+            return header_tag(entity.content, class_=f"font-bold mt-4 mb-4 text-gray-800 dark:text-gray-200 {size_class}")
 
         elif isinstance(entity, CodeBlock):
             code_block = Pre(
                 Code(entity.content, class_=f"language-{entity.language}"),
                 class_="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-x-auto"
             )
-            return Div(code_block, class_="code-block-wrapper")
+            return Div(code_block, class_="code-block-wrapper mt-4")
 
         # elif isinstance(entity, ListItem):
         #     print("entity", entity)
@@ -446,25 +457,30 @@ def convert_entities_to_xue(entities):
         #     return Li(process_children(entity.children) if hasattr(entity, 'children') else entity.content, class_="mb-2")
 
         elif isinstance(entity, LinkEntity) or isinstance(entity, InlineLink):
-            return A(entity.content, href=entity.url, class_="mr-2 text-primary-light dark:text-primary-dark hover:underline")
+            return A(entity.content, href=entity.url, class_="mr-0 text-primary-light dark:text-primary-dark hover:underline")
 
         elif isinstance(entity, EmptyLine):
             return None
 
         elif isinstance(entity, OrderedListItem):
             content = process_children(entity.children) if hasattr(entity, 'children') else [entity.content]
-            return Ol(Li(*content, class_="mb-2"), start=entity.index, class_="list-decimal mb-0 ml-4")
+            return Ol(Li(*content, class_="mb-0"), start=entity.index, class_="list-decimal mb-1 ml-4")
             # return Ol(Li(*content, class_="mb-2"), start=entity.index, class_="list-decimal list-inside mb-4")
             # return Ol(Li(Div(*content, class_ = "flex items-center"), class_="mb-0"), class_="list-decimal mb-0 ml-4")
 
         elif isinstance(entity, UnorderedListItem):
+            # print("UnorderedListItem", hasattr(entity, 'children'))
             content = process_children(entity.children) if hasattr(entity, 'children') else [entity.content]
             # return Ul(Li(*content, class_="mb-0"), class_="list-disc list-inside mb-0")
-            return Ul(Li(Div(*content, class_ = "flex items-center"), class_="mb-0"), class_="list-disc mb-0 ml-4")
+            # return Ul(Li(Div(*content, class_ = "flex items-center"), class_="mb-0"), class_="list-disc mb-0 ml-4")
+            return Ul(Li(*content, class_="mb-0"), class_="list-disc mb-1 ml-4")
+            # return Ul(Li(Div(*content, class_ = "flex flex-wrap"), class_="mb-0"), class_="list-disc mb-0 ml-4")
 
         elif isinstance(entity, Paragraph):
+            content = process_children(entity.children) if hasattr(entity, 'children') else [entity.content]
             # return Span(process_inline_elements(entity.content), class_="mr-2 flex-shrink-0")
-            return P(process_inline_elements(entity.content), class_="mr-2 mb-0")
+            # return P(process_inline_elements(entity.content), class_="mr-2 mb-0")
+            return P(*content, class_="mr-0 mb-1")
 
         elif isinstance(entity, ImageEntity):
             return Image(src=entity.content, alt=entity.alt_text, class_="max-w-full h-auto rounded-lg shadow-lg mb-4")
@@ -479,7 +495,7 @@ def convert_entities_to_xue(entities):
             return Div(*[process_entity(child) for child in entity.children], class_="composite-entity flex items-center mb-2")
 
         else:
-            return str(entity)
+            return str(entity.content)
 
     def process_children(children):
         # result = []
@@ -492,8 +508,12 @@ def convert_entities_to_xue(entities):
         #             else:
         #                 result.append(Span(item, class_="mr-2 flex-shrink-0"))
         # return result
+        for child in children:
+            print("child", child)
 
-        return [Span(process_entity(child), class_="mr-2 flex-shrink-0") for child in children if child is not None if process_entity(child) is not None]
+        return [process_entity(child) for child in children if child is not None if process_entity(child) is not None]
+        # return [Span(process_entity(child), class_="mr-2 w-full") for child in children if child is not None if process_entity(child) is not None]
+        # return [Span(process_entity(child), class_="mr-2 flex-shrink-0") for child in children if child is not None if process_entity(child) is not None]
         # return [process_entity(child) for child in children if child is not None if process_entity(child) is not None]
 
     def process_inline_elements(content):

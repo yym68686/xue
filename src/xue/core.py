@@ -233,13 +233,15 @@ katex_setting = [
     Script(src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"),
     Script("""
         document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll(".math-display").forEach(function(el) {
-                katex.render(el.textContent, el, {displayMode: true});
+            document.querySelectorAll(".math-display, .math-inline").forEach(function(el) {
+                katex.render(el.textContent, el, {
+                    displayMode: el.classList.contains("math-display"),
+                    throwOnError: false
+                });
             });
         });
     """),
 ]
-
 tailwind_setting = [
     Script(src="https://cdn.tailwindcss.com"),
     Script("""

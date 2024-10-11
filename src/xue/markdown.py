@@ -427,6 +427,24 @@ def check_markdown_parse(markdown_file_path, output_file_path="output.md", delim
 
     return parsed_entities
 
+def escape_code_block(content):
+    # 使用html.escape函数进行基本的HTML转义
+    import html
+    escaped_content = html.escape(content)
+
+    # 处理可能导致问题的其他特殊字符
+    escaped_content = escaped_content.replace('\n', '&#10;')  # 换行符
+    escaped_content = escaped_content.replace('\r', '&#13;')  # 回车符
+    escaped_content = escaped_content.replace('\t', '&#9;')   # 制表符
+    escaped_content = escaped_content.replace(' ', '&#32;')   # 空格
+    escaped_content = escaped_content.replace('`', '&#96;')   # 反引号
+    escaped_content = escaped_content.replace('$', '&#36;')   # 美元符号（可能与数学公式冲突）
+
+    # 处理EOF和其他控制字符
+    escaped_content = ''.join('&#%d;' % ord(c) if ord(c) < 32 or ord(c) == 127 else c for c in escaped_content)
+
+    return escaped_content
+
 def convert_entities_to_xue(entities):
     for entity in entities:
         print(entity)
@@ -444,8 +462,9 @@ def convert_entities_to_xue(entities):
             return header_tag(entity.content, class_=f"font-bold mt-4 mb-4 text-gray-800 dark:text-gray-200 {size_class}")
 
         elif isinstance(entity, CodeBlock):
+            escaped_content = escape_code_block(entity.content)
             code_block = Pre(
-                Code(entity.content, class_=f"language-{entity.language}"),
+                Code(escaped_content, class_=f"language-{entity.language}"),
                 class_="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-x-auto"
             )
             return Div(code_block, class_="code-block-wrapper mt-4")

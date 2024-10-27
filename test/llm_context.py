@@ -126,6 +126,7 @@ context = []
 exclude_files = [
     "src/xue/markdown.py",
     "src/xue/llm_context.py",
+    "test/llm_context.py",
     # "src/xue/llm_context-split.py",
     "setup.py",
     # "requirements.txt",

@@ -120,44 +120,6 @@ Head.add_default_children([
             }
         });
     """, id="dropdown-script"),
-    # 加载懒加载的图标
-    Script("""
-        function loadSVGContent() {
-            console.log('loadSVGContent called');
-            document.querySelectorAll('.icon-container').forEach(container => {
-                const img = container.querySelector('img.lazy-icon');
-                const svg = container.querySelector('svg');
-                if (img && svg) {
-                    console.log('Processing image:', img.src);
-                    fetch(img.src)
-                        .then(response => response.text())
-                        .then(svgContent => {
-                            console.log('SVG content loaded for:', img.src);
-                            const parser = new DOMParser();
-                            const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
-                            const newSvg = svgDoc.querySelector('svg');
-                            if (newSvg) {
-                                newSvg.classList = svg.classList;
-                                newSvg.removeAttribute('width');
-                                newSvg.removeAttribute('height');
-                                svg.parentNode.replaceChild(newSvg, svg);
-                                img.style.display = 'none';
-                            }
-                        })
-                        .catch(error => console.error('Error loading SVG:', error));
-                }
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', loadSVGContent);
-        document.body.addEventListener('htmx:afterSettle', loadSVGContent);
-    """, id="load-svg-script"),
-    # 在 htmx:afterSettle 事件后调用 loadSVGContent
-    Script("""
-        htmx.on('htmx:afterSettle', function(event) {
-            loadSVGContent();
-        });
-    """, id="load-svg-script-htmx"),
     # 添加样式
     Style("""
         .icon-container svg {

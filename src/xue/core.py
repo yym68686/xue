@@ -107,21 +107,6 @@ class Image(HTMLTag):
 
 class Raw(HTMLTag): pass
 class Label(HTMLTag): pass
-class LazyIcon(HTMLTag):
-    def __init__(self, icon_name, label, class_="mr-2 h-4 w-4 inline"):
-        super().__init__()
-        self.icon_name = icon_name
-        self.label = label
-        self.class_ = class_
-
-    def render(self, indent=0):
-        url = f"https://unpkg.com/lucide-static@latest/icons/{self.icon_name}.svg"
-        return Div(
-            Image(src=url, alt=f"{self.label} icon", class_=f"{self.class_} lazy-icon", style="display: none;"),
-            Raw(f'<svg class="{self.class_}" data-icon="{self.icon_name}"></svg>'),
-            class_="inline-block icon-container",
-        ).render(indent)
-
 class Table(HTMLTag): pass
 class Thead(HTMLTag): pass
 class Tbody(HTMLTag): pass
@@ -339,19 +324,180 @@ tailwind_setting = [
     # """),
 ]
 
+# LazyIcon 相关脚本
+lazy_icon_scripts = [
+    Script("""
+        function loadSVGContent() {
+            console.log('loadSVGContent called');
+            document.querySelectorAll('.icon-container').forEach(container => {
+                const img = container.querySelector('img.lazy-icon');
+                const svg = container.querySelector('svg');
+                if (img && svg) {
+                    console.log('Processing image:', img.src);
+                    fetch(img.src)
+                        .then(response => response.text())
+                        .then(svgContent => {
+                            console.log('SVG content loaded for:', img.src);
+                            const parser = new DOMParser();
+                            const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+                            const newSvg = svgDoc.querySelector('svg');
+                            if (newSvg) {
+                                newSvg.classList = svg.classList;
+                                newSvg.removeAttribute('width');
+                                newSvg.removeAttribute('height');
+                                svg.parentNode.replaceChild(newSvg, svg);
+                                img.style.display = 'none';
+                            }
+                        })
+                        .catch(error => console.error('Error loading SVG:', error));
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSVGContent);
+        document.body.addEventListener('htmx:afterSettle', loadSVGContent);
+    """, id="load-svg-script"),
+    Script("""
+        htmx.on('htmx:afterSettle', function(event) {
+            loadSVGContent();
+        });
+    """, id="load-svg-script-htmx")
+]
+
+import os
+import httpx
+import inspect
+from pathlib import Path
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+class IconManager:
+    def __init__(self, icon_dir="icons"):
+        self.icon_dir = os.path.join(CURRENT_DIR, icon_dir)
+        self.ensure_icon_dir()
+
+    def ensure_icon_dir(self):
+        """确保图标目录存在"""
+        Path(self.icon_dir).mkdir(parents=True, exist_ok=True)
+
+    def get_icon_path(self, icon_name):
+        """获取图标的本地路径"""
+        return os.path.join(self.icon_dir, f"{icon_name}.svg")
+
+    def has_local_icon(self, icon_name):
+        """检查图标是否在本地存在"""
+        return os.path.exists(self.get_icon_path(icon_name))
+
+    async def download_icon(self, icon_name):
+        """下载图标到本地"""
+        if not self.has_local_icon(icon_name):
+            url = f"https://unpkg.com/lucide-static@latest/icons/{icon_name}.svg"
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(url)
+                    if response.status_code == 200:
+                        with open(self.get_icon_path(icon_name), 'wb') as f:
+                            f.write(response.content)
+                        return True
+            except Exception as e:
+                print(f"Error downloading icon {icon_name}: {e}")
+                return False
+        return True
+
+    def get_icon_content(self, icon_name):
+        """获取图标内容"""
+        if self.has_local_icon(icon_name):
+            with open(self.get_icon_path(icon_name), 'r') as f:
+                return f.read()
+        return None
+
+# 创建全局图标管理器实例
+icon_manager = IconManager(icon_dir="icons")
+
+class LazyIcon(HTMLTag):
+
+    def __init__(self, icon_name, label, class_="mr-2 h-4 w-4 inline"):
+        super().__init__()
+        self.icon_name = icon_name
+        self.label = label
+        self.class_ = class_
+
+    def render(self, indent=0):
+        # 检查本地是否有图标
+        icon_content = icon_manager.get_icon_content(self.icon_name)
+
+        if icon_content:
+            # 如果本地有图标，直接使用本地内容
+            svg_content = icon_content.replace('class="', f'class="{self.class_} ')
+            return Div(
+                Raw(svg_content),
+                class_="inline-block icon-container",
+            ).render(indent)
+        else:
+            # 如果本地没有图标，使用远程加载
+            url = f"https://unpkg.com/lucide-static@latest/icons/{self.icon_name}.svg"
+            return Div(
+                Image(src=url, alt=f"{self.label} icon", class_=f"{self.class_} lazy-icon", style="display: none;"),
+                Raw(f'<svg class="{self.class_}" data-icon="{self.icon_name}"></svg>'),
+                class_="inline-block icon-container",
+            ).render(indent)
+
+def detect_component_usage():
+    """检测主程序是否导入了特定组件"""
+    # 获取调用栈
+    stack = inspect.stack()
+    # 查找主程序文件
+    main_module = None
+    for frame in stack:
+        if frame.filename != __file__ and not frame.filename.endswith('importlib/__init__.py'):
+            main_module = frame.filename
+            break
+
+    if not main_module:
+        return set()
+
+    # 读取主程序文件内容
+    try:
+        with open(main_module, 'r') as f:
+            content = f.read()
+    except:
+        return set()
+
+    # 检测使用的组件
+    used_components = set()
+    component_patterns = {
+        'sidebar': ['from xue.components.sidebar import', 'from xue.components import sidebar'],
+        'dropdown': ['from xue.components.dropdown import', 'from xue.components import dropdown'],
+        # 添加其他需要检测的组件
+    }
+
+    for component, patterns in component_patterns.items():
+        if any(pattern in content for pattern in patterns):
+            used_components.add(component)
+
+    return used_components
+
 def xue_initialize(katex=False, prism_code_highlight=False, prism_copy_to_clipboard=False, tailwind=False):
     init_setting = [
         Meta(charset="UTF-8"),
         Meta(name="viewport", content="width=device-width, initial-scale=1.0"),
         Script(src="https://unpkg.com/htmx.org@1.9.0"),
     ]
+
+    # 检测组件使用情况
+    used_components = detect_component_usage()
+
+    # 如果使用了 sidebar 或 dropdown，添加 LazyIcon 脚本
+    if {'sidebar', 'dropdown'} & used_components:
+        init_setting.extend(lazy_icon_scripts)
+
     if tailwind:
-        init_setting += tailwind_setting
+        init_setting.extend(tailwind_setting)
     if katex:
-        init_setting += katex_setting
+        init_setting.extend(katex_setting)
     if prism_code_highlight:
-        init_setting += prism_code_highlight_setting
+        init_setting.extend(prism_code_highlight_setting)
     if prism_copy_to_clipboard:
-        init_setting += prism_copy_to_clipboard_setting
+        init_setting.extend(prism_copy_to_clipboard_setting)
 
     Head.set_default_children(init_setting)

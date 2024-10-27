@@ -9,5 +9,8 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages("src"),
     package_dir={"": "src"},
+    package_data={
+        "xue": ["icons/*"]  # 包含xue包下的icons目录中的所有文件
+    },
     py_modules=["xue"],
 )

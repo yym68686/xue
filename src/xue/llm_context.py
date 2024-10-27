@@ -104,13 +104,16 @@ def print_file_content(directory, exclude_files, ignore_patterns=None):
         if file_path not in exclude_files:
             content = read_file_content(file_path)
             file_path = file_path.replace("/Users/yanyuming/Downloads/GitHub/", "")
-            # print(f"Content:")
+
+            # 计算并显示行数
+            line_count = len(content.splitlines()) if content else 0
+
             if content is None or content.strip() == "":
                 file_content_context.append(f"{file_path}: This file is empty.")
                 # print(f"This file is empty.")
-                print(f"{file_path}")
+                print(f"{line_count:>4} {file_path}")
             else:
-                print(f"{file_path}")
+                print(f"{line_count:>4} {file_path}")
                 file_content_context.append(f"{file_path}:")
                 for line in content.splitlines():
                     file_content_context.append(f"{line}")
@@ -133,6 +136,19 @@ exclude_files = [
     "xue_context.txt",
     "test/components/test_button copy.py",
     "test/components/test_dropdown.py",
+    "test/components/test_resizable_shadcn.py",
+    "test/components/test_model_config_row.py",
+    "test/components/test_button.py",
+    "test/components/test_input_shadcn.py",
+    "test/components/test_select_shadcn.py",
+    "test/components/test_checkbox_shadcn.py",
+    "test/components/test_form_shadcn.py",
+    "test/components/test_dropdown_shadcn.py",
+    # "test/components/test_sidebar.py",
+
+    "src/xue/components/resizable.py",
+    "src/xue/components/model_config_row.py",
+    # "src/xue/components/sidebar.py",
     # "test/components/test_form_uni_api.py",
 ]
 
@@ -143,6 +159,7 @@ exclude_dirs = [
     "__pycache__",
     "example",
 ]
+
 # 使用示例
 directory_path = "/Users/yanyuming/Downloads/GitHub/xue"  # 替换为你想要展示的目录路径
 exclude_files = [os.path.join(directory_path, file) for file in exclude_files]

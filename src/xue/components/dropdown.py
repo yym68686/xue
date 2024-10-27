@@ -34,9 +34,29 @@ Head.add_default_children([
             padding: 0.25rem;
         }
         .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* 统一图标和文本之间的间距 */
             color: #374151;
             border-radius: 0.25rem;
             transition: background-color 0.2s ease;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            width: 100%;
+        }
+        .dropdown-item .icon-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1rem;  /* 固定图标大小 */
+            height: 1rem; /* 固定图标大小 */
+            flex-shrink: 0; /* 防止图标被压缩 */
+        }
+        .dropdown-item .icon-container svg {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
         }
         .dropdown-item:hover {
             background-color: #f3f4f6;
@@ -120,13 +140,21 @@ Head.add_default_children([
             }
         });
     """, id="dropdown-script"),
-    # 添加样式
+    # # 添加样式
     Style("""
         .icon-container svg {
-            display: inline-block;
-            vertical-align: middle;
+            width: 100%;
+            height: 100%;
+            max-width: 100%; /* 添加这行 */
+            max-height: 100%; /* 添加这行 */
         }
     """, id="icon-container-style"),
+    # Style("""
+    #     .icon-container svg {
+    #         display: inline-block;
+    #         vertical-align: middle;
+    #     }
+    # """, id="icon-container-style"),
 ])
 
 def dropdown_menu(label, **kwargs):
@@ -172,15 +200,15 @@ def dropdown_menu_content(menu_id, items):
                 menu_items.append(Li(
                     Div(
                         icon,
-                        Span(item['label'], class_="opacity-50"),
+                        Span(item['label'], class_="flex-grow"),
                         Span(item.get('shortcut', ''), class_="ml-auto text-xs text-gray-400 dark:text-gray-500 opacity-50"),
-                        class_="flex items-center px-4 py-2 text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed dropdown-item"
+                        class_="dropdown-item opacity-50 cursor-not-allowed"
                     )
                 ))
             else:
-                # 创建一个属性字典,包含所有的 HTMX 属性
+                # 创建一个属性字典，包含所有的 HTMX 属性
                 attrs = {
-                    'class_': "flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 ease-in-out dropdown-item whitespace-nowrap",
+                    'class_': "dropdown-item",
                     'href': item.get('href', '#')
                 }
 
@@ -188,23 +216,19 @@ def dropdown_menu_content(menu_id, items):
                     if key.startswith('hx-'):
                         attrs[key.replace('-', '_')] = value
 
-                label = item['label']
-                shortcut = item.get('shortcut', '')
-
                 menu_items.append(Li(
                     A(
                         icon,
-                        Span(label, class_="flex-grow"),
+                        Span(item['label'], class_="flex-grow"),
                         Span(
-                            Span(class_="invisible", style=f"width: {max_label_length - len(label) + max_shortcut_length - len(shortcut)}ch"),
-                            Span(shortcut, class_="text-xs text-gray-400 dark:text-gray-500"),
-                            class_="flex items-center"
-                        ),
+                            item.get('shortcut', ''),
+                            class_="ml-auto text-xs text-gray-400 dark:text-gray-500"
+                        ) if item.get('shortcut') else None,
                         **attrs
                     )
                 ))
 
-    return Ul(*menu_items, class_="py-1")
+    return Ul(*menu_items, class_="py-1 min-w-[220px]")
 
 def dropdown(label, id):
     return Div(

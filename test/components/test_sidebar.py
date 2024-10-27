@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from xue import HTML, Head, Body, Div, xue_initialize
-from xue.components.sidebar import Sidebar
+from xue.components import sidebar
 
 app = FastAPI()
 xue_initialize(tailwind=True)
@@ -72,7 +72,7 @@ sidebar_items = [
 @app.get("/sidebar/toggle", response_class=HTMLResponse)
 async def toggle_sidebar(is_collapsed: bool = False):
     # 返回相反的折叠状态
-    return Sidebar(
+    return sidebar.Sidebar(
         "zap",
         "Xue Admin",
         sidebar_items,
@@ -87,7 +87,7 @@ async def root():
         Head(title="Sidebar Example"),
         Body(
             Div(
-                Sidebar("zap", "Xue Admin", sidebar_items, is_collapsed=False, active_item="dashboard"),
+                sidebar.Sidebar("zap", "Xue Admin", sidebar_items, is_collapsed=False, active_item="dashboard"),
                 Div(
                     "Welcome to Dashboard",
                     id="main-content",

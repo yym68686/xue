@@ -5,42 +5,49 @@ Head.add_default_children([
     Script(src="https://cdn.jsdelivr.net/npm/apexcharts", id="apexcharts-script"),
     Style("""
         .chart-container {
-            background: white;
             border-radius: 0.5rem;
             padding: 1rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             min-height: 350px;
+            border: 1px solid #e5e7eb;
+            transition: background-color 0.2s ease;
         }
-        .chart-container:hover {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+
         .chart-tooltip {
-            background: white;
             border-radius: 0.375rem;
             padding: 0.5rem;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         @media (prefers-color-scheme: dark) {
             .chart-container {
-                background: #1f2937;
+                border-color: #374151;
             }
+
             .chart-tooltip {
-                background: #374151;
+                background: #1f2937;
+                border-color: #374151;
                 color: #e5e7eb;
             }
+
             .apexcharts-text {
                 fill: #e5e7eb !important;
             }
+
             .apexcharts-legend-text {
                 color: #e5e7eb !important;
             }
+
             .apexcharts-gridline {
-                stroke: #4b5563 !important;
+                stroke: #374151 !important;
             }
+
             .apexcharts-xaxis-label,
             .apexcharts-yaxis-label {
                 fill: #9ca3af !important;
             }
+
             .apexcharts-toolbar {
                 filter: invert(1) hue-rotate(180deg);
             }

@@ -28,7 +28,7 @@ async def root():
         "stacked": False,
         "horizontal": False,
         "colors": ["#2563eb", "#60a5fa"],
-        "grid": False,  # 隐藏网格
+        "grid": True,  # 隐藏网格
         "legend": True,  # 显示图例
         "tooltip": True  # 启用工具提示
     }

@@ -101,6 +101,24 @@ async def root():
     print(result)
     return result
 
+@app.get("/data", response_class=HTMLResponse)
+async def data_page():
+    return Div(
+        "数据库已禁用",
+        id="main-content",
+        class_="ml-[240px] p-6 transition-[margin] duration-200 ease-in-out"
+    ).render()
+
+@app.get("/sidebar/update/{active_item}", response_class=HTMLResponse)
+async def update_sidebar(active_item: str):
+    return sidebar.Sidebar(
+        "zap",
+        "Xue Admin",
+        sidebar_items,
+        is_collapsed=False,
+        active_item=active_item
+    ).render()
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("__main__:app", host="0.0.0.0", port=8000, reload=True)

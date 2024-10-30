@@ -212,6 +212,21 @@ Head.add_default_children([
             height: 2rem;
         }
     """, id="sidebar-style"),
+    Script("""
+        document.addEventListener('click', function(event) {
+            const sidebarItem = event.target.closest('.sidebar-item');
+            if (sidebarItem) {
+                const value = sidebarItem.getAttribute('data-value');
+                if (value) {
+                    fetch(`/sidebar/update/${value}`)
+                        .then(response => response.text())
+                        .then(html => {
+                            document.getElementById('sidebar').outerHTML = html;
+                        });
+                }
+            }
+        });
+    """, id="sidebar-click-script"),
 ])
 
 def Sidebar(logo_icon, site_name, items, is_collapsed=False, active_item=None):
@@ -242,7 +257,13 @@ def Sidebar(logo_icon, site_name, items, is_collapsed=False, active_item=None):
                 class_="tooltip-text" if is_collapsed else "tooltip-text hidden"
             ),
             class_=f"sidebar-item tooltip {' active' if item.get('value') == active_item else ''}",
-            **{f"hx-{k.replace('_', '-')}": v for k, v in item.get('hx', {}).items()}
+            data_value=item['value'],  # 添加 data-value 属性
+            **{
+                "hx-get": item['hx'].get('get', ''),
+                "hx-target": item['hx'].get('target', ''),
+                "hx-trigger": "click",
+                "hx-swap": "innerHTML"
+            }
         )
 
     def render_toggle_button():

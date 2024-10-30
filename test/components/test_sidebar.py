@@ -109,6 +109,14 @@ async def data_page():
         class_="ml-[240px] p-6 transition-[margin] duration-200 ease-in-out"
     ).render()
 
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page():
+    return Div(
+        "Welcome to Dashboard",
+        id="main-content",
+        class_="ml-[240px] p-6 transition-[margin] duration-200 ease-in-out"
+    ).render()
+
 @app.get("/sidebar/update/{active_item}", response_class=HTMLResponse)
 async def update_sidebar(active_item: str):
     return sidebar.Sidebar(

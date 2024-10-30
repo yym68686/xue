@@ -213,20 +213,43 @@ Head.add_default_children([
         }
     """, id="sidebar-style"),
     Script("""
-        document.addEventListener('click', function(event) {
+        function initializeSidebarEvents() {
+            // 移除现有的事件监听器
+            document.removeEventListener('click', handleSidebarClick);
+            // 添加新的事件监听器
+            document.addEventListener('click', handleSidebarClick);
+        }
+
+        function handleSidebarClick(event) {
             const sidebarItem = event.target.closest('.sidebar-item');
             if (sidebarItem) {
                 const value = sidebarItem.getAttribute('data-value');
                 if (value) {
+                    // 更新侧边栏
                     fetch(`/sidebar/update/${value}`)
                         .then(response => response.text())
                         .then(html => {
                             document.getElementById('sidebar').outerHTML = html;
+                            // 重新初始化事件监听器
+                            initializeSidebarEvents();
                         });
+
+                    // 更新内容区域
+                    const url = sidebarItem.getAttribute('data-url');
+                    if (url) {
+                        fetch(url)
+                            .then(response => response.text())
+                            .then(html => {
+                                document.getElementById('main-content').innerHTML = html;
+                            });
+                    }
                 }
             }
-        });
-    """, id="sidebar-click-script"),
+        }
+
+        // 初始化事件监听器
+        document.addEventListener('DOMContentLoaded', initializeSidebarEvents);
+    """, id="sidebar-script"),
 ])
 
 def Sidebar(logo_icon, site_name, items, is_collapsed=False, active_item=None):
@@ -257,13 +280,8 @@ def Sidebar(logo_icon, site_name, items, is_collapsed=False, active_item=None):
                 class_="tooltip-text" if is_collapsed else "tooltip-text hidden"
             ),
             class_=f"sidebar-item tooltip {' active' if item.get('value') == active_item else ''}",
-            data_value=item['value'],  # 添加 data-value 属性
-            **{
-                "hx-get": item['hx'].get('get', ''),
-                "hx-target": item['hx'].get('target', ''),
-                "hx-trigger": "click",
-                "hx-swap": "innerHTML"
-            }
+            data_value=item['value'],
+            data_url=item['hx'].get('get', '')  # 将 URL 存储在 data-url 属性中
         )
 
     def render_toggle_button():

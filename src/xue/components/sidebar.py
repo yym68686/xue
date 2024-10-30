@@ -240,7 +240,7 @@ Head.add_default_children([
                         fetch(url)
                             .then(response => response.text())
                             .then(html => {
-                                document.getElementById('main-content').innerHTML = html;
+                                document.getElementById('main-content').outerHTML = html;
                             });
                     }
                 }

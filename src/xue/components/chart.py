@@ -68,14 +68,24 @@ def bar_chart(id, data, x_axis, series, config=None):
     if config:
         default_config.update(config)
 
-    # 处理数据格式
-    categories = [item[x_axis] for item in data]
-    series_data = []
-    for s in series:
-        series_data.append({
-            "name": s["name"],
-            "data": [item[s["data_key"]] for item in data]
-        })
+    # 检查数据是否为空
+    is_empty = len(data) == 0
+
+    # 如果数据为空，创建一个空的数据集
+    if is_empty:
+        data = [{"empty": ""}]  # 创建一个空数据点
+        categories = [""]
+        # series_data = [{"name": s["name"], "data": [0]} for s in series]
+        series_data = []
+    else:
+        # 处理正常数据
+        categories = [item[x_axis] for item in data]
+        series_data = []
+        for s in series:
+            series_data.append({
+                "name": s["name"],
+                "data": [item[s["data_key"]] for item in data]
+            })
 
     # 创建 ApexCharts 配置
     chart_options = {
@@ -89,8 +99,24 @@ def bar_chart(id, data, x_axis, series, config=None):
             "zoom": {
                 "enabled": True
             },
-            "foreColor": "#6b7280",  # 默认文字颜色
+            "foreColor": "#6b7280",
             "background": "transparent",
+            "events": {
+                "mounted": """function(chartContext, config) {
+                    const chart = chartContext.el;
+                    if (%s) {
+                        const noDataEl = document.createElement('div');
+                        noDataEl.style.position = 'absolute';
+                        noDataEl.style.left = '50%%';
+                        noDataEl.style.top = '50%%';
+                        noDataEl.style.transform = 'translate(-50%%, -50%%)';
+                        noDataEl.style.fontSize = '1rem';
+                        noDataEl.style.color = '#6b7280';
+                        noDataEl.textContent = '暂无数据';
+                        chart.appendChild(noDataEl);
+                    }
+                }""" % str(is_empty).lower()
+            }
         },
         "theme": {
             "mode": "light",
@@ -111,24 +137,27 @@ def bar_chart(id, data, x_axis, series, config=None):
             "labels": {
                 "style": {
                     "cssClass": "text-sm"
-                }
+                },
+                "show": not is_empty  # 数据为空时隐藏标签
             },
             "axisBorder": {
-                "show": False
+                "show": not is_empty
             },
             "axisTicks": {
-                "show": False
+                "show": not is_empty
             }
         },
         "yaxis": {
             "labels": {
                 "style": {
                     "cssClass": "text-sm"
-                }
-            }
+                },
+                "show": not is_empty  # 数据为空时隐藏标签
+            },
+            "min": 0  # 确保Y轴从0开始
         },
         "grid": {
-            "show": default_config["grid"],
+            "show": default_config["grid"] and not is_empty,  # 数据为空时隐藏网格
             "borderColor": "#e5e7eb",
             "strokeDashArray": 4,
             "padding": {
@@ -139,7 +168,7 @@ def bar_chart(id, data, x_axis, series, config=None):
             }
         },
         "legend": {
-            "show": default_config["legend"],
+            "show": default_config["legend"] and not is_empty,  # 数据为空时隐藏图例
             "position": "bottom",
             "markers": {
                 "radius": 4
@@ -147,15 +176,24 @@ def bar_chart(id, data, x_axis, series, config=None):
             "fontFamily": "inherit"
         },
         "tooltip": {
-            "enabled": default_config["tooltip"],
+            "enabled": default_config["tooltip"] and not is_empty,  # 数据为空时禁用工具提示
             "shared": True,
             "intersect": False,
             "custom": None
         },
-        "series": series_data
+        "series": series_data,
+        "noData": {
+            "text": "暂无数据",
+            "align": "center",
+            "verticalAlign": "middle",
+            "style": {
+                "fontSize": "1rem",
+                "color": "#6b7280"
+            }
+        }
     }
 
-    # 添加深色模式检测和主题切换的JavaScript代码
+    # 主题切换脚本保持不变
     theme_script = """
         function updateChartTheme(chart) {
             const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;

@@ -17,12 +17,14 @@ async def root():
         {"month": "May", "desktop": 209, "mobile": 130},
         {"month": "Jun", "desktop": 214, "mobile": 140}
     ]
+    chart_data = []
 
     # 定义系列
     series = [
         {"name": "Desktop", "data_key": "desktop"},
         {"name": "Mobile", "data_key": "mobile"}
     ]
+    # series = []
 
     chart_config = {
         "stacked": False,

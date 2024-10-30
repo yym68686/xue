@@ -159,6 +159,7 @@ exclude_dirs = [
     "uni-api",
     "__pycache__",
     "example",
+    "icons",
 ]
 
 # 使用示例

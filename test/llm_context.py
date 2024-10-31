@@ -145,20 +145,21 @@ exclude_files = [
     "test/components/test_checkbox_shadcn.py",
     "test/components/test_form_shadcn.py",
     "test/components/test_dropdown_shadcn.py",
-    # "test/components/test_sidebar.py",
 
     "src/xue/components/menubar.py",
     "src/xue/components/resizable.py",
     "src/xue/components/model_config_row.py",
 
-    "src/xue/components/chart.py",
+    # "src/xue/components/chart.py",
     "src/xue/components/dropdown.py",
     "src/xue/components/select.py",
     "src/xue/components/checkbox.py",
     "test/components/test_sheet_shadcn.py",
     "test/components/test_menubar_shadcn.py",
     "test/components/test_card_shadcn.py",
-    # "src/xue/components/sidebar.py",
+    "test/components/test_sidebar.py",
+    "src/xue/components/sidebar.py",
+    # "test/components/test_chart.py",
     # "test/components/test_form_uni_api.py",
 ]
 

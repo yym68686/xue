@@ -33,20 +33,18 @@ Head.add_default_children([
             height: 100%;
             display: flex;
             align-items: flex-end;
-            gap: 2rem;
-            margin-left: 4rem;
-            padding-right: 2rem;
         }
 
         .bar-group {
             position: relative;
             flex: 1;
             height: 100%;
+            padding: 0 0.5rem;
         }
 
         .bar {
             position: absolute;
-            width: 45%;
+            width: 40%;
             transition: all 0.2s;
             border-radius: 0.25rem 0.25rem 0 0;
         }
@@ -270,7 +268,7 @@ def chart(data, config, stacked=False, height="400px", show_grid=True):
                                 height: {height_percent}%;
                                 background-color: {cfg['color']};
                                 bottom: 0;
-                                {'right: 0;' if i == 1 else ''}
+                                left: {9 if i == 0 else 51}%;
                             """,
                             onmouseover=f"showTooltip(event, {item})",
                             onmouseout="hideTooltip(event)"

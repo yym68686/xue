@@ -55,7 +55,7 @@ def FormField(label, name, type="text", placeholder="", description=None, **kwar
 
 # 保留原有的表单验证脚本
 Head.add_default_children([
-    Script("""
+    Script(r"""
         function validateForm(event) {
             event.preventDefault();
             let isValid = true;
